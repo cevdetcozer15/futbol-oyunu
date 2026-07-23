@@ -46,7 +46,8 @@ io.on('connection', (socket) => {
             players: [{ id: socket.id, name: playerName, score: 0 }],
             roundActive: false,
             currentTeamA: "",
-            currentTeamB: ""
+            currentTeamB: "",
+            passVotes: 0 // O anki raunttaki pas sayısını tutmak için
         };
         socket.join(roomCode);
         socket.emit('roomCreated', roomCode); // Kodu kurucuya gönder
@@ -75,6 +76,8 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (!room) return;
 
+        room.passVotes = 0; // Yeni tur başlıyor, pas sayacını sıfırla!
+
         // Rastgele futbolcu ve 2 takım seç
         const randomPlayer = db[Math.floor(Math.random() * db.length)];
         const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
@@ -89,7 +92,7 @@ io.on('connection', (socket) => {
         });
     }
 
-    // 4. Oyuncudan Gelen Cevabı Kontrol Etme (Aynı Anda Cevap Verme Mantığı)
+    // 4. Oyuncudan Gelen Cevabı Kontrol Etme
     socket.on('submitAnswer', (data) => {
         const { roomCode, answer } = data;
         const room = rooms[roomCode];
@@ -135,6 +138,22 @@ io.on('connection', (socket) => {
         } else {
             // Sadece yanlış bilen kişiye uyarı gönder
             socket.emit('wrongAnswer');
+        }
+    });
+
+    // 5. Pas Geçme İsteği
+    socket.on('passVote', (roomCode) => {
+        const room = rooms[roomCode];
+        if (!room || !room.roundActive) return;
+
+        room.passVotes++; // Odadaki pas sayısını 1 artır
+
+        // Eğer 2 kişi de pasa bastıysa (oy 2 olduysa)
+        if (room.passVotes >= 2) {
+            room.roundActive = false; // Mevcut turu durdur
+            
+            // Hemen yeni turu başlat!
+            startRound(roomCode);
         }
     });
 
