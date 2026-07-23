@@ -10,14 +10,7 @@ const io = new Server(server);
 app.use(express.static(__dirname));
 
 // --- HAKEMİN BİLGİSİ (VERİTABANI VE KURALLAR) ---
-const db = [
-    { name: "Ángel Di María", teams: ["real madrid", "manchester united", "psg", "juventus", "benfica"] },
-    { name: "Cristiano Ronaldo", teams: ["sporting", "manchester united", "real madrid", "juventus", "al nassr"] },
-    { name: "Zlatan Ibrahimović", teams: ["malmö", "ajax", "juventus", "inter", "barcelona", "ac milan", "psg", "manchester united"] },
-    { name: "Olivier Giroud", teams: ["montpellier", "arsenal", "chelsea", "ac milan", "lafc"] },
-    { name: "Arturo Vidal", teams: ["bayer leverkusen", "juventus", "bayern münih", "barcelona", "inter"] },
-    { name: "Hakan Çalhanoğlu", teams: ["karlsruher", "hamburg", "bayer leverkusen", "ac milan", "inter"] }
-];
+const db = require('./futbolcular.json');
 
 function cleanText(text) {
     return text.toLowerCase()
