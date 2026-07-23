@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kesişim: Futbol Online</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Lobi Ekranı -->
+    <div id="lobby" class="screen active">
+        <h1>Ortak Futbolcuyu Bul!</h1>
+        <input type="text" id="playerName" placeholder="Adını Yaz">
+
+        <div class="lobby-actions">
+            <button id="createRoomBtn">Oda Kur</button>
+            <div class="join-section">
+                <input type="text" id="roomCodeInput" placeholder="Oda Kodu Gir">
+                <button id="joinRoomBtn">Katıl</button>
+            </div>
+        </div>
+        <div id="lobby-message"></div>
+    </div>
+
+    <!-- Bekleme Ekranı -->
+    <div id="waiting" class="screen">
+        <h2>Oda Kuruldu!</h2>
+        <p>Rakibinin girmesi gereken kod:</p>
+        <div class="room-code-display" id="displayRoomCode">---</div>
+        <p>Bekleniyor...</p>
+    </div>
+
+    <!-- Oyun Ekranı -->
+    <div id="game" class="screen">
+        <div class="scoreboard">
+            <div class="player-score"><span id="p1-name">Oyuncu 1</span>: <span id="p1-score">0</span></div>
+            <div class="player-score"><span id="p2-name">Oyuncu 2</span>: <span id="p2-score">0</span></div>
+        </div>
+
+        <div id="status-message">Hazır olun...</div>
+
+        <div class="teams-container">
+            <div class="team-box" id="teamA-box">?</div>
+            <div class="team-box" id="teamB-box">?</div>
+        </div>
+
+        <div class="action-area" id="action-area" style="display:none;">
+            <input type="text" id="answer-input" placeholder="Futbolcu adını yaz...">
+            <button id="submit-answer-btn">Gönder (Enter)</button>
+        </div>
+    </div>
+
+    <!-- Sunucu ile iletişimi sağlayan gizli köprü -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
