@@ -7,6 +7,7 @@ const teamABox = document.getElementById('teamA-box');
 const teamBBox = document.getElementById('teamB-box');
 const actionArea = document.getElementById('action-area');
 const answerInput = document.getElementById('answer-input');
+const passButton = document.getElementById('passButton');
 
 let myRoomCode = "";
 let isRoundActive = false;
@@ -52,6 +53,17 @@ socket.on('newRound', (teams) => {
     teamABox.innerText = "?";
     teamBBox.innerText = "?";
     isRoundActive = false;
+    socket.on('newRound', (teams) => {
+    actionArea.style.display = 'none';
+    teamABox.innerText = "?";
+    teamBBox.innerText = "?";
+    isRoundActive = false;
+    
+    // PAS BUTONUNU SIFIRLA
+    passButton.disabled = false;
+    passButton.innerText = 'Pas Geç ⏭️';
+    
+    // ... kodun geri kalanı aynen devam ediyor (let count = 3; vs.)
     
     let count = 3;
     statusMsg.innerText = count;
@@ -87,6 +99,17 @@ function sendAnswer() {
 
 document.getElementById('submit-answer-btn').addEventListener('click', sendAnswer);
 answerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendAnswer(); });
+// Pas Butonu İşlemi
+passButton.addEventListener('click', () => {
+    if (!isRoundActive) return; // Raunt aktif değilse basılamasın
+    
+    // Sunucuya hangi odada pas geçildiğini bildir
+    socket.emit('passVote', myRoomCode); 
+    
+    // Butonu kilitle ve yazıyı değiştir
+    passButton.disabled = true;
+    passButton.innerText = 'Rakip Bekleniyor... ⏳';
+});
 
 // Hatalı Cevap Titreşimi
 socket.on('wrongAnswer', () => {
