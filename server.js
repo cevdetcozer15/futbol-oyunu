@@ -14,9 +14,17 @@ const db = require('./futbolcular.json');
 
 function cleanText(text) {
     return text.toLowerCase()
+        // Türkçe harfler
         .replace(/ğ/g, 'g').replace(/ü/g, 'u')
         .replace(/ş/g, 's').replace(/ı/g, 'i')
         .replace(/ö/g, 'o').replace(/ç/g, 'c')
+        // Balkan, İspanyol, İskandinav ve diğer özel harfler (Pjanić, Džeko, Kjær vb. için)
+        .replace(/ć/g, 'c').replace(/č/g, 'c')
+        .replace(/š/g, 's').replace(/ž/g, 'z')
+        .replace(/đ/g, 'd').replace(/ñ/g, 'n')
+        .replace(/ø/g, 'o').replace(/æ/g, 'ae')
+        .replace(/ß/g, 'ss')
+        // Geri kalan tüm aksanlı, şapkalı, noktalı harfleri (á, é, í vb.) kökten temizle
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
