@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const fs = require('fs'); // YENİ: Dosya okuma/yazma modülü
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,7 +15,6 @@ const db = require('./futbolcular.json');
 let topScores = [];
 const LEADERBOARD_FILE = './leaderboard.json';
 
-// Sunucu başlarken eski skorları oku
 try {
     if (fs.existsSync(LEADERBOARD_FILE)) {
         topScores = JSON.parse(fs.readFileSync(LEADERBOARD_FILE));
@@ -24,20 +23,14 @@ try {
     console.log("Skor tablosu dosyası okunamadı veya yok.");
 }
 
-// Skoru tabloya ekleyen ve kaydeden fonksiyon
 function updateLeaderboard(playerName, score) {
-    if (score <= 0) return; // 0 puan alanları listeye sokmuyoruz
+    if (score <= 0) return;
 
     topScores.push({ name: playerName, score: score });
-    // Yüksekten düşüğe doğru sırala
     topScores.sort((a, b) => b.score - a.score);
-    // Sadece ilk 5'i tut
     topScores = topScores.slice(0, 5);
     
-    // Dosyaya kaydet
     fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(topScores));
-    
-    // Herkese güncel tabloyu gönder
     io.emit('updateLeaderboard', topScores);
 }
 
@@ -61,7 +54,6 @@ function generateRoomCode() {
 io.on('connection', (socket) => {
     console.log('Yeni bir cihaz bağlandı:', socket.id);
 
-    // Biri bağlandığında direkt güncel skor tablosunu ona gönder
     socket.emit('updateLeaderboard', topScores);
 
     socket.on('createSinglePlayer', (playerName) => {
@@ -205,13 +197,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    // TEK OYUNCULU SÜRE BİTTİĞİNDE
     socket.on('spTimeUp', (roomCode) => {
         const room = rooms[roomCode];
         if (room && room.isSinglePlayer) {
             room.roundActive = false;
-            
-            // Oyun bitti, oyuncunun skorunu tabloya gönder
             updateLeaderboard(room.players[0].name, room.players[0].score);
 
             io.to(roomCode).emit('gameOver', {
@@ -225,7 +214,6 @@ io.on('connection', (socket) => {
     socket.on('playAgain', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
-            // Eğer oyuncu oyunu ortasında "Yeni Oyun" derse de skorunu kaydet (opsiyonel)
             if (room.isSinglePlayer && room.players[0].score > 0) {
                 updateLeaderboard(room.players[0].name, room.players[0].score);
             }
@@ -248,19 +236,14 @@ const port = process.env.PORT || 3000;
 server.listen(port, () => {
     console.log('Hakem (Sunucu) sahaya çıktı!');
 });
+
 // --- SUNUCUYU UYANIK TUTMA KODU (5 DAKİKA PING) ---
 const https = require('https');
 
 setInterval(() => {
-    // Kendi Render site adresin
     https.get('https://futbol-oyunu.onrender.com', (res) => {
         console.log('Sunucu uyanık tutuldu (Auto-Ping)');
     }).on('error', (err) => {
         console.log('Ping hatası:', err.message);
     });
-}, 5 * 60 * 1000); // Her 5 dakikada bir tetiklenir
-        console.log('Sunucu uyanık tutuldu (Auto-Ping)');
-    }).on('error', (err) => {
-        console.log('Ping hatası:', err.message);
-    });
-}, 10 * 60 * 1000); // Her 10 dakikada bir tetiklenir
+}, 5 * 60 * 1000);
