@@ -157,3 +157,18 @@ socket.on('gameOver', (data) => {
         }
     }());
 });
+
+// --- YENİ OYUN VE ÇIKIŞ BUTONLARI ---
+const newGameBtn = document.getElementById('new-game-btn');
+const exitBtn = document.getElementById('exit-btn');
+
+exitBtn.addEventListener('click', () => {
+    window.location.reload(); 
+});
+
+newGameBtn.addEventListener('click', () => {
+    socket.emit('playAgain', myRoomCode);
+    
+    statusMsg.innerText = "Yeniden başlatılıyor...";
+    statusMsg.style.color = "#fff";
+});
