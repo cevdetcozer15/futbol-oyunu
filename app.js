@@ -131,4 +131,29 @@ socket.on('gameOver', (data) => {
     
     statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`;
     statusMsg.style.color = "#3498db";
+
+    // 3 Saniyelik Şampiyonlar Ligi Kutlama Efekti
+    var duration = 3 * 1000;
+    var end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#FFD700', '#FFFFFF', '#1E90FF'] // Altın, Beyaz, Mavi (ŞL renkleri)
+        });
+        confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#FFD700', '#FFFFFF', '#1E90FF']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
 });
