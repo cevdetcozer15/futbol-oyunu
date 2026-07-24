@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const fs = require('fs'); // YENİ: Dosya okuma/yazma modülü
 
 const app = express();
 const server = http.createServer(app);
@@ -9,6 +10,36 @@ const io = new Server(server);
 app.use(express.static(__dirname));
 
 const db = require('./futbolcular.json');
+
+// --- LİDERLİK TABLOSU YÖNETİMİ ---
+let topScores = [];
+const LEADERBOARD_FILE = './leaderboard.json';
+
+// Sunucu başlarken eski skorları oku
+try {
+    if (fs.existsSync(LEADERBOARD_FILE)) {
+        topScores = JSON.parse(fs.readFileSync(LEADERBOARD_FILE));
+    }
+} catch (error) {
+    console.log("Skor tablosu dosyası okunamadı veya yok.");
+}
+
+// Skoru tabloya ekleyen ve kaydeden fonksiyon
+function updateLeaderboard(playerName, score) {
+    if (score <= 0) return; // 0 puan alanları listeye sokmuyoruz
+
+    topScores.push({ name: playerName, score: score });
+    // Yüksekten düşüğe doğru sırala
+    topScores.sort((a, b) => b.score - a.score);
+    // Sadece ilk 5'i tut
+    topScores = topScores.slice(0, 5);
+    
+    // Dosyaya kaydet
+    fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(topScores));
+    
+    // Herkese güncel tabloyu gönder
+    io.emit('updateLeaderboard', topScores);
+}
 
 function cleanText(text) {
     return text.toLowerCase()
@@ -30,7 +61,9 @@ function generateRoomCode() {
 io.on('connection', (socket) => {
     console.log('Yeni bir cihaz bağlandı:', socket.id);
 
-    // --- TEK OYUNCULU ODA KURMA ---
+    // Biri bağlandığında direkt güncel skor tablosunu ona gönder
+    socket.emit('updateLeaderboard', topScores);
+
     socket.on('createSinglePlayer', (playerName) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = {
@@ -46,7 +79,6 @@ io.on('connection', (socket) => {
         startRound(roomCode);
     });
 
-    // --- ÇOKLU OYUNCULU ODA KURMA ---
     socket.on('createRoom', (playerName) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = {
@@ -96,7 +128,6 @@ io.on('connection', (socket) => {
             teamB: room.currentTeamB 
         });
 
-        // Sadece Çoklu Oyuncuda Tur Süresi (33 Sn) Çalışır
         if (!room.isSinglePlayer) {
             room.roundTimer = setTimeout(() => {
                 if(room.roundActive) {
@@ -130,7 +161,6 @@ io.on('connection', (socket) => {
             room.players[winnerIndex].score++;
 
             if (room.isSinglePlayer) {
-                // Tek oyuncuda 5'te bitme kuralı yok, anında yeni rounda geç
                 io.to(roomCode).emit('roundWon', {
                     winnerName: "DOĞRU!",
                     correctPlayer: matchedPlayer.name.toUpperCase(),
@@ -163,7 +193,6 @@ io.on('connection', (socket) => {
         if (!room || !room.roundActive) return;
 
         if (room.isSinglePlayer) {
-            // Tek oyuncuda pasa basılırsa beklemeden anında atla
             room.roundActive = false;
             startRound(roomCode);
         } else {
@@ -176,11 +205,15 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Tek oyunculu süre bitimi tetikleyicisi
+    // TEK OYUNCULU SÜRE BİTTİĞİNDE
     socket.on('spTimeUp', (roomCode) => {
         const room = rooms[roomCode];
         if (room && room.isSinglePlayer) {
             room.roundActive = false;
+            
+            // Oyun bitti, oyuncunun skorunu tabloya gönder
+            updateLeaderboard(room.players[0].name, room.players[0].score);
+
             io.to(roomCode).emit('gameOver', {
                 winnerName: "SÜRE BİTTİ!",
                 correctPlayer: "Skorun: " + room.players[0].score,
@@ -192,6 +225,11 @@ io.on('connection', (socket) => {
     socket.on('playAgain', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
+            // Eğer oyuncu oyunu ortasında "Yeni Oyun" derse de skorunu kaydet (opsiyonel)
+            if (room.isSinglePlayer && room.players[0].score > 0) {
+                updateLeaderboard(room.players[0].name, room.players[0].score);
+            }
+
             room.players[0].score = 0;
             if(room.players[1]) room.players[1].score = 0;
             clearTimeout(room.roundTimer);
