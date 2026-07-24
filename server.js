@@ -28,7 +28,7 @@ function cleanText(text) {
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-const WIN_SCORE = 3;
+const WIN_SCORE = 5;
 const rooms = {}; // Tüm oyun odalarının verisini burada tutacağız
 
 // Rastgele 4 haneli oda kodu üretici
