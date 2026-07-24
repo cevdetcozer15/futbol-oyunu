@@ -158,6 +158,25 @@ io.on('connection', (socket) => {
         }
     });
 
+    // 6. Yeni Oyun İsteği
+    socket.on('playAgain', (roomCode) => {
+        const room = rooms[roomCode];
+        if (room) {
+            // Skorları sıfırla
+            room.players[0].score = 0;
+            room.players[1].score = 0;
+            
+            io.to(roomCode).emit('roundWon', { 
+                scores: [0, 0], 
+                winnerName: "YENİ OYUN", 
+                correctPlayer: "Skorlar Sıfırlandı!" 
+            });
+
+            // Yeni rauntu başlat
+            startRound(roomCode); 
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('Cihaz ayrıldı:', socket.id);
         // İstersen burada biri çıkarsa odayı kapatma mantığı eklenebilir
