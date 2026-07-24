@@ -8,18 +8,18 @@ const actionArea = document.getElementById('action-area');
 const answerInput = document.getElementById('answer-input');
 const passButton = document.getElementById('passButton');
 const timerDisplay = document.getElementById('timer-display');
+const leaderboardContainer = document.getElementById('leaderboard-container');
+const leaderboardList = document.getElementById('leaderboard-list');
 
 let myRoomCode = "";
 let isRoundActive = false;
 let countdownInterval;
 
-// Tek Oyunculu Mod Değişkenleri
 let isSinglePlayerMode = false;
 let isFirstRoundSP = true;
 let spTimerLeft = 120;
 let spGlobalInterval;
 
-// --- LOBİ İŞLEMLERİ ---
 document.getElementById('singlePlayerBtn').addEventListener('click', () => {
     const name = document.getElementById('playerName').value || "Oyuncu";
     socket.emit('createSinglePlayer', name);
@@ -48,34 +48,45 @@ socket.on('roomCreated', (code) => {
 
 socket.on('errorMsg', (msg) => { document.getElementById('lobby-message').innerText = msg; });
 
-// --- OYUN İŞLEMLERİ ---
-// Çoklu Oyuncu Hazır
 socket.on('gameReady', (players) => {
     isSinglePlayerMode = false;
     document.getElementById('p1-name').innerText = players.p1;
     document.getElementById('p2-name').innerText = players.p2;
     document.getElementById('p2-score-container').style.display = 'block';
+    leaderboardContainer.style.display = 'none'; // Çoklu oyuncuda tabloyu gizle
     screens.lobby.classList.remove('active');
     screens.waiting.classList.remove('active');
     screens.game.classList.add('active');
 });
 
-// Tek Oyunculu Hazır
 socket.on('gameReadySP', (data) => {
     isSinglePlayerMode = true;
     isFirstRoundSP = true;
     myRoomCode = data.roomCode;
     document.getElementById('p1-name').innerText = data.p1;
-    document.getElementById('p2-score-container').style.display = 'none'; // 2. Oyuncuyu gizle
+    document.getElementById('p2-score-container').style.display = 'none'; 
+    leaderboardContainer.style.display = 'block'; // Tek oyuncuda tabloyu göster
     screens.lobby.classList.remove('active');
     screens.waiting.classList.remove('active');
     screens.game.classList.add('active');
 });
 
+// YENİ: Skor Tablosunu Güncelleme
+socket.on('updateLeaderboard', (topScores) => {
+    leaderboardList.innerHTML = ''; // Listeyi temizle
+    if (topScores.length === 0) {
+        leaderboardList.innerHTML = '<li>Henüz skor yok</li>';
+        return;
+    }
+    
+    topScores.forEach((item, index) => {
+        leaderboardList.innerHTML += `<li><span>${index + 1}. ${item.name}</span> <span>${item.score} P</span></li>`;
+    });
+});
+
 socket.on('newRound', (teams) => {
     actionArea.style.display = 'none';
     
-    // Çoklu oyuncudaysak sayacı her round sıfırla. Tek oyuncudaysak dokunma, arkada aksın.
     if (!isSinglePlayerMode) {
         timerDisplay.style.display = 'none'; 
         clearInterval(countdownInterval);
@@ -89,7 +100,6 @@ socket.on('newRound', (teams) => {
     passButton.disabled = false;
     passButton.innerText = 'Pas Geç ⏭️';
     
-    // Tek oyunculu modda ilk round hariç bekleme süresini 1 saniyeye düşürerek akıcılık sağlıyoruz
     let count = (isSinglePlayerMode && !isFirstRoundSP) ? 1 : 3;
     statusMsg.innerText = count;
     statusMsg.style.color = "#fff";
@@ -111,7 +121,6 @@ socket.on('newRound', (teams) => {
 
             timerDisplay.style.display = 'flex';
 
-            // Sayaç Mantığı
             if (isSinglePlayerMode) {
                 if (isFirstRoundSP) {
                     isFirstRoundSP = false;
@@ -219,7 +228,6 @@ socket.on('gameOver', (data) => {
     }());
 });
 
-// Oyunu sıfırlama sinyali geldiğinde
 socket.on('playAgainReady', () => {
     isFirstRoundSP = true;
     if (isSinglePlayerMode) {
