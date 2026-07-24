@@ -30,15 +30,33 @@ function generateRoomCode() {
 io.on('connection', (socket) => {
     console.log('Yeni bir cihaz bağlandı:', socket.id);
 
+    // --- TEK OYUNCULU ODA KURMA ---
+    socket.on('createSinglePlayer', (playerName) => {
+        const roomCode = generateRoomCode();
+        rooms[roomCode] = {
+            isSinglePlayer: true,
+            players: [{ id: socket.id, name: playerName, score: 0 }],
+            roundActive: false,
+            currentTeamA: "",
+            currentTeamB: "",
+            passVotes: 0
+        };
+        socket.join(roomCode);
+        socket.emit('gameReadySP', { p1: playerName, roomCode });
+        startRound(roomCode);
+    });
+
+    // --- ÇOKLU OYUNCULU ODA KURMA ---
     socket.on('createRoom', (playerName) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = {
+            isSinglePlayer: false,
             players: [{ id: socket.id, name: playerName, score: 0 }],
             roundActive: false,
             currentTeamA: "",
             currentTeamB: "",
             passVotes: 0,
-            roundTimer: null // Sunucu tarafındaki süre sayacı
+            roundTimer: null
         };
         socket.join(roomCode);
         socket.emit('roomCreated', roomCode); 
@@ -46,7 +64,7 @@ io.on('connection', (socket) => {
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
         const room = rooms[roomCode];
-        if (room && room.players.length === 1) {
+        if (room && !room.isSinglePlayer && room.players.length === 1) {
             room.players.push({ id: socket.id, name: playerName, score: 0 });
             socket.join(roomCode);
             
@@ -65,7 +83,7 @@ io.on('connection', (socket) => {
         if (!room) return;
 
         room.passVotes = 0; 
-        clearTimeout(room.roundTimer); // Eski sayacı temizle
+        clearTimeout(room.roundTimer); 
 
         const randomPlayer = db[Math.floor(Math.random() * db.length)];
         const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
@@ -78,22 +96,16 @@ io.on('connection', (socket) => {
             teamB: room.currentTeamB 
         });
 
-        // 33 Saniye Kuralı (3 sn Hazırlık + 30 sn Oyun)
-        room.roundTimer = setTimeout(() => {
-            if(room.roundActive) {
-                room.roundActive = false;
-                
-                // Süre bittiğinde doğru cevabı göster
-                io.to(roomCode).emit('timeUp', {
-                    correctPlayer: randomPlayer.name.toUpperCase()
-                });
-                
-                // 4 saniye sonra yeni turu otomatik başlat
-                setTimeout(() => {
-                    startRound(roomCode);
-                }, 4000);
-            }
-        }, 33000);
+        // Sadece Çoklu Oyuncuda Tur Süresi (33 Sn) Çalışır
+        if (!room.isSinglePlayer) {
+            room.roundTimer = setTimeout(() => {
+                if(room.roundActive) {
+                    room.roundActive = false;
+                    io.to(roomCode).emit('timeUp', { correctPlayer: randomPlayer.name.toUpperCase() });
+                    setTimeout(() => { startRound(roomCode); }, 4000);
+                }
+            }, 33000);
+        }
     }
 
     socket.on('submitAnswer', (data) => {
@@ -112,27 +124,34 @@ io.on('connection', (socket) => {
 
         if (matchedPlayer && cleanedAnswer.length > 2) {
             room.roundActive = false; 
-            clearTimeout(room.roundTimer); // Biri bilirse arka plan sayacını durdur
+            clearTimeout(room.roundTimer); 
 
             const winnerIndex = room.players.findIndex(p => p.id === socket.id);
             room.players[winnerIndex].score++;
 
-            if (room.players[winnerIndex].score >= WIN_SCORE) {
-                io.to(roomCode).emit('gameOver', {
-                    winnerName: room.players[winnerIndex].name,
-                    correctPlayer: matchedPlayer.name.toUpperCase(),
-                    scores: [room.players[0].score, room.players[1].score]
-                });
-            } else {
+            if (room.isSinglePlayer) {
+                // Tek oyuncuda 5'te bitme kuralı yok, anında yeni rounda geç
                 io.to(roomCode).emit('roundWon', {
-                    winnerName: room.players[winnerIndex].name,
+                    winnerName: "DOĞRU!",
                     correctPlayer: matchedPlayer.name.toUpperCase(),
-                    scores: [room.players[0].score, room.players[1].score]
+                    scores: [room.players[0].score, 0]
                 });
-                
-                setTimeout(() => {
-                    startRound(roomCode);
-                }, 4000);
+                setTimeout(() => { startRound(roomCode); }, 1500);
+            } else {
+                if (room.players[winnerIndex].score >= WIN_SCORE) {
+                    io.to(roomCode).emit('gameOver', {
+                        winnerName: room.players[winnerIndex].name,
+                        correctPlayer: matchedPlayer.name.toUpperCase(),
+                        scores: [room.players[0].score, room.players[1].score]
+                    });
+                } else {
+                    io.to(roomCode).emit('roundWon', {
+                        winnerName: room.players[winnerIndex].name,
+                        correctPlayer: matchedPlayer.name.toUpperCase(),
+                        scores: [room.players[0].score, room.players[1].score]
+                    });
+                    setTimeout(() => { startRound(roomCode); }, 4000);
+                }
             }
         } else {
             socket.emit('wrongAnswer');
@@ -143,12 +162,30 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (!room || !room.roundActive) return;
 
-        room.passVotes++; 
-
-        if (room.passVotes >= 2) {
-            room.roundActive = false; 
-            clearTimeout(room.roundTimer); // Pas geçilirse sayacı durdur
+        if (room.isSinglePlayer) {
+            // Tek oyuncuda pasa basılırsa beklemeden anında atla
+            room.roundActive = false;
             startRound(roomCode);
+        } else {
+            room.passVotes++; 
+            if (room.passVotes >= 2) {
+                room.roundActive = false; 
+                clearTimeout(room.roundTimer);
+                startRound(roomCode);
+            }
+        }
+    });
+
+    // Tek oyunculu süre bitimi tetikleyicisi
+    socket.on('spTimeUp', (roomCode) => {
+        const room = rooms[roomCode];
+        if (room && room.isSinglePlayer) {
+            room.roundActive = false;
+            io.to(roomCode).emit('gameOver', {
+                winnerName: "SÜRE BİTTİ!",
+                correctPlayer: "Skorun: " + room.players[0].score,
+                scores: [room.players[0].score, 0]
+            });
         }
     });
 
@@ -156,15 +193,10 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (room) {
             room.players[0].score = 0;
-            room.players[1].score = 0;
+            if(room.players[1]) room.players[1].score = 0;
             clearTimeout(room.roundTimer);
             
-            io.to(roomCode).emit('roundWon', { 
-                scores: [0, 0], 
-                winnerName: "YENİ OYUN", 
-                correctPlayer: "Skorlar Sıfırlandı!" 
-            });
-
+            io.to(roomCode).emit('playAgainReady');
             startRound(roomCode); 
         }
     });
