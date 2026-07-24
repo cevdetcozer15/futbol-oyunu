@@ -354,7 +354,6 @@
     { "name": "Karim Adeyemi", "teams": ["salzburg", "dortmund"] },
     { "name": "Donyell Malen", "teams": ["psv", "dortmund"] },
     { "name": "Waldemar Anton", "teams": ["hannover", "stuttgart", "dortmund"] },
-    { "name": "Ian Maatsen", "teams": ["chelsea", "burnley", "dortmund", "aston villa"] },
     { "name": "Amadou Onana", "teams": ["hamburg", "lille", "everton", "aston villa"] },
     { "name": "Youri Tielemans", "teams": ["anderlecht", "monaco", "leicester city", "aston villa"] },
     { "name": "Pau Torres", "teams": ["villarreal", "aston villa"] },
@@ -363,7 +362,7 @@
     { "name": "Odilon Kossounou", "teams": ["club brugge", "bayer leverkusen", "atalanta"] },
     { "name": "Ademola Lookman", "teams": ["everton", "rb leipzig", "fulham", "atalanta"] },
     { "name": "Charles De Ketelaere", "teams": ["club brugge", "ac milan", "atalanta"] },
-    { "name": "Raoul Bellanova", "teams": ["bordeaux", "cagliari", "inter", "torino", "atalanta"] },
+    { "name": "Raoul Bellanova", "teams": ["inter", "torino", "atalanta"] },
     { "name": "Mateo Retegui", "teams": ["boca juniors", "tigre", "genoa", "atalanta"] },
     { "name": "Kaoru Mitoma", "teams": ["kawasaki frontale", "union sg", "brighton"] },
     { "name": "João Pedro", "teams": ["fluminense", "watford", "brighton"] },
@@ -375,5 +374,5 @@
     { "name": "Matteo Guendouzi", "teams": ["fenerbahçe", "arsenal", "lazio"] },
     { "name": "Orkun Kökçü", "teams": ["beşiktaş", "feyenord", "benfica"] },
     { "name": "emmanuel agbadou", "teams": ["beşiktaş", "wolves"] },
-    { "name": "alexander nübel", "teams": ["beşiktaş", "bayen münih", "schealke"] },
+    { "name": "alexander nübel", "teams": ["beşiktaş", "bayen münih", "schealke"] }
 ]
