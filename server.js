@@ -248,3 +248,14 @@ const port = process.env.PORT || 3000;
 server.listen(port, () => {
     console.log('Hakem (Sunucu) sahaya çıktı!');
 });
+// --- SUNUCUYU UYANIK TUTMA KODU (PING) ---
+const https = require('https');
+
+setInterval(() => {
+    // Kendi Render site adresini buraya yaz
+    https.get('https://futbol-oyunu.onrender.com', (res) => {
+        console.log('Sunucu uyanık tutuldu (Auto-Ping)');
+    }).on('error', (err) => {
+        console.log('Ping hatası:', err.message);
+    });
+}, 10 * 60 * 1000); // Her 10 dakikada bir tetiklenir
