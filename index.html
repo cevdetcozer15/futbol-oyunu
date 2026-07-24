@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kesişim: Futbol Online</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
     <!-- Lobi Ekranı -->
@@ -13,7 +13,6 @@
         <input type="text" id="playerName" placeholder="Adını Yaz">
 
         <div class="lobby-actions">
-            <!-- YENİ: Tek Oyunculu Butonu -->
             <button id="singlePlayerBtn">Tek Oyuncu (Süreli)</button>
             <button id="createRoomBtn">Oda Kur (Çoklu)</button>
             <div class="join-section">
@@ -34,9 +33,17 @@
 
     <!-- Oyun Ekranı -->
     <div id="game" class="screen">
+        
+        <!-- YENİ: Top Skorer Tablosu (Sadece Tek Oyunculu Modda Görünecek) -->
+        <div id="leaderboard-container" style="display: none;">
+            <h3>🏆 Top 5 Skorer</h3>
+            <ul id="leaderboard-list">
+                <li>Yükleniyor...</li>
+            </ul>
+        </div>
+
         <div class="scoreboard">
             <div class="player-score" id="p1-score-container"><span id="p1-name">Oyuncu 1</span>: <span id="p1-score">0</span></div>
-            <!-- Çoklu oyuncuda görünecek, tek oyunculuda gizlenecek -->
             <div class="player-score" id="p2-score-container"><span id="p2-name">Oyuncu 2</span>: <span id="p2-score">0</span></div>
         </div>
 
@@ -63,9 +70,8 @@
         </div>
     </div>
 
-    <!-- Sunucu ile iletişimi sağlayan gizli köprü ve Konfeti Kütüphanesi -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=5"></script>
 </body>
 </html>
