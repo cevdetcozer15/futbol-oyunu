@@ -144,7 +144,7 @@
     { "name": "Fernando Torres", "teams": ["chelsea","liverpool", "athletico madrid"] },
     { "name": "David Raya", "teams": ["blackburn", "brentford", "arsenal"] },
     { "name": "Antoine Semenyo", "teams": ["manchester city", "bournemouth"] },
-    { "name": "Leroy Sane", "teams": ["manchester city", "bayern münih", "Galatasaray"] },
+    { "name": "Leroy Sane", "teams": ["manchester city", "bayern münih", "Galatasaray", "schalke"] },
     { "name": "Lucas Torreira", "teams": ["arsenal", "Galatasaray"] },
     { "name": "Davinson Sánchez", "teams": ["atletico nacional", "ajax", "tottenham", "galatasaray"] },
     { "name": "Barış Alper Yılmaz", "teams": ["ankara keçiörengücü", "galatasaray"] },
