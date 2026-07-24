@@ -1,6 +1,5 @@
 const socket = io();
 
-// DOM Elementleri
 const screens = { lobby: document.getElementById('lobby'), waiting: document.getElementById('waiting'), game: document.getElementById('game') };
 const statusMsg = document.getElementById('status-message');
 const teamABox = document.getElementById('teamA-box');
@@ -14,7 +13,18 @@ let myRoomCode = "";
 let isRoundActive = false;
 let countdownInterval;
 
-// --- 1. LOBİ İŞLEMLERİ ---
+// Tek Oyunculu Mod Değişkenleri
+let isSinglePlayerMode = false;
+let isFirstRoundSP = true;
+let spTimerLeft = 120;
+let spGlobalInterval;
+
+// --- LOBİ İŞLEMLERİ ---
+document.getElementById('singlePlayerBtn').addEventListener('click', () => {
+    const name = document.getElementById('playerName').value || "Oyuncu";
+    socket.emit('createSinglePlayer', name);
+});
+
 document.getElementById('createRoomBtn').addEventListener('click', () => {
     const name = document.getElementById('playerName').value || "Oyuncu 1";
     socket.emit('createRoom', name);
@@ -36,14 +46,27 @@ socket.on('roomCreated', (code) => {
     screens.waiting.classList.add('active');
 });
 
-socket.on('errorMsg', (msg) => {
-    document.getElementById('lobby-message').innerText = msg;
-});
+socket.on('errorMsg', (msg) => { document.getElementById('lobby-message').innerText = msg; });
 
-// --- 2. OYUN İŞLEMLERİ ---
+// --- OYUN İŞLEMLERİ ---
+// Çoklu Oyuncu Hazır
 socket.on('gameReady', (players) => {
+    isSinglePlayerMode = false;
     document.getElementById('p1-name').innerText = players.p1;
     document.getElementById('p2-name').innerText = players.p2;
+    document.getElementById('p2-score-container').style.display = 'block';
+    screens.lobby.classList.remove('active');
+    screens.waiting.classList.remove('active');
+    screens.game.classList.add('active');
+});
+
+// Tek Oyunculu Hazır
+socket.on('gameReadySP', (data) => {
+    isSinglePlayerMode = true;
+    isFirstRoundSP = true;
+    myRoomCode = data.roomCode;
+    document.getElementById('p1-name').innerText = data.p1;
+    document.getElementById('p2-score-container').style.display = 'none'; // 2. Oyuncuyu gizle
     screens.lobby.classList.remove('active');
     screens.waiting.classList.remove('active');
     screens.game.classList.add('active');
@@ -51,9 +74,13 @@ socket.on('gameReady', (players) => {
 
 socket.on('newRound', (teams) => {
     actionArea.style.display = 'none';
-    timerDisplay.style.display = 'none'; // Hazırlık aşamasında sayacı gizle
+    
+    // Çoklu oyuncudaysak sayacı her round sıfırla. Tek oyuncudaysak dokunma, arkada aksın.
+    if (!isSinglePlayerMode) {
+        timerDisplay.style.display = 'none'; 
+        clearInterval(countdownInterval);
+    }
     timerDisplay.classList.remove('timer-warning');
-    clearInterval(countdownInterval);
     
     teamABox.innerText = "?";
     teamBBox.innerText = "?";
@@ -62,7 +89,8 @@ socket.on('newRound', (teams) => {
     passButton.disabled = false;
     passButton.innerText = 'Pas Geç ⏭️';
     
-    let count = 3;
+    // Tek oyunculu modda ilk round hariç bekleme süresini 1 saniyeye düşürerek akıcılık sağlıyoruz
+    let count = (isSinglePlayerMode && !isFirstRoundSP) ? 1 : 3;
     statusMsg.innerText = count;
     statusMsg.style.color = "#fff";
     
@@ -81,23 +109,36 @@ socket.on('newRound', (teams) => {
             answerInput.focus();
             isRoundActive = true;
 
-            // 30 SANİYELİK SAYACI BAŞLAT
             timerDisplay.style.display = 'flex';
-            let timeLeft = 30;
-            timerDisplay.innerText = timeLeft;
 
-            countdownInterval = setInterval(() => {
-                timeLeft--;
+            // Sayaç Mantığı
+            if (isSinglePlayerMode) {
+                if (isFirstRoundSP) {
+                    isFirstRoundSP = false;
+                    spTimerLeft = 120;
+                    timerDisplay.innerText = spTimerLeft;
+                    spGlobalInterval = setInterval(() => {
+                        spTimerLeft--;
+                        timerDisplay.innerText = spTimerLeft;
+                        
+                        if(spTimerLeft <= 10) timerDisplay.classList.add('timer-warning');
+                        
+                        if(spTimerLeft <= 0) {
+                            clearInterval(spGlobalInterval);
+                            socket.emit('spTimeUp', myRoomCode);
+                        }
+                    }, 1000);
+                }
+            } else {
+                let timeLeft = 30;
                 timerDisplay.innerText = timeLeft;
-                
-                if(timeLeft <= 10) {
-                    timerDisplay.classList.add('timer-warning');
-                }
-
-                if(timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                }
-            }, 1000);
+                countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.innerText = timeLeft;
+                    if(timeLeft <= 10 && timeLeft > 0) timerDisplay.classList.add('timer-warning');
+                    if(timeLeft <= 0) clearInterval(countdownInterval);
+                }, 1000);
+            }
         }
     }, 1000);
 });
@@ -118,7 +159,7 @@ passButton.addEventListener('click', () => {
     if (!isRoundActive) return; 
     socket.emit('passVote', myRoomCode); 
     passButton.disabled = true;
-    passButton.innerText = 'Rakip Bekleniyor... ⏳';
+    passButton.innerText = isSinglePlayerMode ? 'Geçiliyor...' : 'Rakip Bekleniyor... ⏳';
 });
 
 socket.on('wrongAnswer', () => {
@@ -126,7 +167,6 @@ socket.on('wrongAnswer', () => {
     setTimeout(() => { answerInput.style.backgroundColor = "#fff"; }, 400);
 });
 
-// SÜRE BİTTİĞİNDE
 socket.on('timeUp', (data) => {
     isRoundActive = false;
     clearInterval(countdownInterval);
@@ -139,32 +179,39 @@ socket.on('timeUp', (data) => {
 
 socket.on('roundWon', (data) => {
     isRoundActive = false;
-    clearInterval(countdownInterval);
+    if (!isSinglePlayerMode) {
+        clearInterval(countdownInterval);
+        timerDisplay.style.display = 'none';
+    }
     actionArea.style.display = 'none';
-    timerDisplay.style.display = 'none';
     
     document.getElementById('p1-score').innerText = data.scores[0];
-    document.getElementById('p2-score').innerText = data.scores[1];
+    if (!isSinglePlayerMode) document.getElementById('p2-score').innerText = data.scores[1];
     
-    statusMsg.innerText = `${data.winnerName} BİLDİ!\nCevap: ${data.correctPlayer}`;
+    statusMsg.innerText = `${data.winnerName}\nCevap: ${data.correctPlayer}`;
     statusMsg.style.color = "#2ecc71";
 });
 
 socket.on('gameOver', (data) => {
     isRoundActive = false;
     clearInterval(countdownInterval);
+    clearInterval(spGlobalInterval);
     actionArea.style.display = 'none';
     timerDisplay.style.display = 'none';
     
     document.getElementById('p1-score').innerText = data.scores[0];
-    document.getElementById('p2-score').innerText = data.scores[1];
     
-    statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`;
+    if (isSinglePlayerMode) {
+        statusMsg.innerText = `SÜRE BİTTİ! ⏰\nToplam Skorun: ${data.scores[0]}`;
+    } else {
+        document.getElementById('p2-score').innerText = data.scores[1];
+        statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`;
+    }
+    
     statusMsg.style.color = "#3498db";
 
     var duration = 3 * 1000;
     var end = Date.now() + duration;
-
     (function frame() {
         confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] });
         confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] });
@@ -172,14 +219,22 @@ socket.on('gameOver', (data) => {
     }());
 });
 
-// --- YENİ OYUN VE ÇIKIŞ BUTONLARI ---
-const newGameBtn = document.getElementById('new-game-btn');
-const exitBtn = document.getElementById('exit-btn');
-
-exitBtn.addEventListener('click', () => { window.location.reload(); });
-
-newGameBtn.addEventListener('click', () => {
-    socket.emit('playAgain', myRoomCode);
+// Oyunu sıfırlama sinyali geldiğinde
+socket.on('playAgainReady', () => {
+    isFirstRoundSP = true;
+    if (isSinglePlayerMode) {
+        clearInterval(spGlobalInterval);
+        spTimerLeft = 120;
+    } else {
+        clearInterval(countdownInterval);
+    }
+    document.getElementById('p1-score').innerText = "0";
+    document.getElementById('p2-score').innerText = "0";
     statusMsg.innerText = "Yeniden başlatılıyor...";
     statusMsg.style.color = "#fff";
 });
+
+const newGameBtn = document.getElementById('new-game-btn');
+const exitBtn = document.getElementById('exit-btn');
+exitBtn.addEventListener('click', () => { window.location.reload(); });
+newGameBtn.addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
