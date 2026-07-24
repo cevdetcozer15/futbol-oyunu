@@ -24,7 +24,7 @@
     { "name": "Marquinhos", "teams": ["roma", "psg"] },
     { "name": "Ángel Di María", "teams": ["benfica", "real madrid", "manchester united", "psg", "juventus"] },
     { "name": "Cristiano Ronaldo", "teams": ["sporting", "manchester united", "real madrid", "juventus", "al nassr"] },
-    { "name": "Zlatan Ibrahimović", "teams": ["malmö", "ajax", "juventus", "inter", "barcelona", "ac milan", "psg", "manchester united"] },
+    { "name": "Zlatan Ibrahimović", "teams": ["ajax", "juventus", "inter", "barcelona", "ac milan", "psg", "manchester united"] },
     { "name": "Olivier Giroud", "teams": ["arsenal", "chelsea", "ac milan"] },
     { "name": "Arturo Vidal", "teams": ["bayer leverkusen", "juventus", "bayern münih", "barcelona", "inter", "flamengo"] },
     { "name": "Hakan Çalhanoğlu", "teams": ["hamburg", "bayer leverkusen", "ac milan", "inter"] },
@@ -39,7 +39,7 @@
     { "name": "Mario Balotelli", "teams": ["inter", "manchester city", "ac milan", "liverpool", "adana demirspor"] },
     { "name": "Ricardo Quaresma", "teams": ["sporting", "barcelona", "porto", "inter", "chelsea", "beşiktaş", "kasimpaşa"] },
     { "name": "Pepe", "teams": ["porto", "real madrid", "beşiktaş"] },
-    { "name": "Wesley Sneijder", "teams": ["ajax", "real madrid", "inter", "galatasaray"] },
+    { "name": "Wesley Sneijder", "teams": ["ajax", "real madrid", "inter", "galatasaray", "nice"] },
     { "name": "Didier Drogba", "teams": ["marseille", "chelsea", "galatasaray"] },
     { "name": "Radamel Falcao", "teams": ["porto", "atletico madrid", "monaco", "manchester united", "chelsea", "galatasaray"] },
     { "name": "Nicolas Anelka", "teams": ["psg", "arsenal", "real madrid", "liverpool", "manchester city", "fenerbahçe", "chelsea", "juventus"] },
@@ -374,5 +374,6 @@
     { "name": "Matteo Guendouzi", "teams": ["fenerbahçe", "arsenal", "lazio"] },
     { "name": "Orkun Kökçü", "teams": ["beşiktaş", "feyenord", "benfica"] },
     { "name": "emmanuel agbadou", "teams": ["beşiktaş", "wolves"] },
-    { "name": "alexander nübel", "teams": ["beşiktaş", "bayen münih", "schealke"] }
+    { "name": "alexander nübel", "teams": ["beşiktaş", "bayen münih", "schealke"] },
+    { "name": "Emmanuel Adebayor", "teams": ["real madrid", "metz", "monaco", "arsenal", "manchester city", "başakşehir","Tottenham","Crystal Palace","kayserispor"] }
 ]
