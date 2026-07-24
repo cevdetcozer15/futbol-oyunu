@@ -1,4 +1,4 @@
-const socket = io(); // Sunucuya bağlan
+const socket = io();
 
 // DOM Elementleri
 const screens = { lobby: document.getElementById('lobby'), waiting: document.getElementById('waiting'), game: document.getElementById('game') };
@@ -8,9 +8,11 @@ const teamBBox = document.getElementById('teamB-box');
 const actionArea = document.getElementById('action-area');
 const answerInput = document.getElementById('answer-input');
 const passButton = document.getElementById('passButton');
+const timerDisplay = document.getElementById('timer-display');
 
 let myRoomCode = "";
 let isRoundActive = false;
+let countdownInterval;
 
 // --- 1. LOBİ İŞLEMLERİ ---
 document.getElementById('createRoomBtn').addEventListener('click', () => {
@@ -27,7 +29,6 @@ document.getElementById('joinRoomBtn').addEventListener('click', () => {
     }
 });
 
-// Sunucudan Gelen Cevaplar (Lobi)
 socket.on('roomCreated', (code) => {
     myRoomCode = code;
     document.getElementById('displayRoomCode').innerText = code;
@@ -50,11 +51,14 @@ socket.on('gameReady', (players) => {
 
 socket.on('newRound', (teams) => {
     actionArea.style.display = 'none';
+    timerDisplay.style.display = 'none'; // Hazırlık aşamasında sayacı gizle
+    timerDisplay.classList.remove('timer-warning');
+    clearInterval(countdownInterval);
+    
     teamABox.innerText = "?";
     teamBBox.innerText = "?";
     isRoundActive = false;
     
-    // PAS BUTONUNU SIFIRLA
     passButton.disabled = false;
     passButton.innerText = 'Pas Geç ⏭️';
     
@@ -76,45 +80,69 @@ socket.on('newRound', (teams) => {
             answerInput.value = "";
             answerInput.focus();
             isRoundActive = true;
+
+            // 30 SANİYELİK SAYACI BAŞLAT
+            timerDisplay.style.display = 'flex';
+            let timeLeft = 30;
+            timerDisplay.innerText = timeLeft;
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft;
+                
+                if(timeLeft <= 10) {
+                    timerDisplay.classList.add('timer-warning');
+                }
+
+                if(timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
         }
     }, 1000);
 });
 
-// Cevap Gönderme
 function sendAnswer() {
     if (!isRoundActive) return;
     const answer = answerInput.value;
     if (answer.trim() !== "") {
         socket.emit('submitAnswer', { roomCode: myRoomCode, answer: answer });
-        answerInput.value = ""; // Gönderince kutuyu temizle
+        answerInput.value = ""; 
     }
 }
 
 document.getElementById('submit-answer-btn').addEventListener('click', sendAnswer);
 answerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendAnswer(); });
 
-// Pas Butonu İşlemi
 passButton.addEventListener('click', () => {
-    if (!isRoundActive) return; // Raunt aktif değilse basılamasın
-    
-    // Sunucuya hangi odada pas geçildiğini bildir
+    if (!isRoundActive) return; 
     socket.emit('passVote', myRoomCode); 
-    
-    // Butonu kilitle ve yazıyı değiştir
     passButton.disabled = true;
     passButton.innerText = 'Rakip Bekleniyor... ⏳';
 });
 
-// Hatalı Cevap Titreşimi
 socket.on('wrongAnswer', () => {
-    answerInput.style.backgroundColor = "#e74c3c"; // Kırmızı uyarı
+    answerInput.style.backgroundColor = "#e74c3c"; 
     setTimeout(() => { answerInput.style.backgroundColor = "#fff"; }, 400);
 });
 
-// Biri Doğru Bildiğinde
+// SÜRE BİTTİĞİNDE
+socket.on('timeUp', (data) => {
+    isRoundActive = false;
+    clearInterval(countdownInterval);
+    actionArea.style.display = 'none';
+    timerDisplay.style.display = 'none';
+    
+    statusMsg.innerText = `SÜRE BİTTİ! ⏰\n(Cevap: ${data.correctPlayer})`;
+    statusMsg.style.color = "#e74c3c";
+});
+
 socket.on('roundWon', (data) => {
     isRoundActive = false;
+    clearInterval(countdownInterval);
     actionArea.style.display = 'none';
+    timerDisplay.style.display = 'none';
+    
     document.getElementById('p1-score').innerText = data.scores[0];
     document.getElementById('p2-score').innerText = data.scores[1];
     
@@ -122,39 +150,25 @@ socket.on('roundWon', (data) => {
     statusMsg.style.color = "#2ecc71";
 });
 
-// Oyun Bittiğinde
 socket.on('gameOver', (data) => {
     isRoundActive = false;
+    clearInterval(countdownInterval);
     actionArea.style.display = 'none';
+    timerDisplay.style.display = 'none';
+    
     document.getElementById('p1-score').innerText = data.scores[0];
     document.getElementById('p2-score').innerText = data.scores[1];
     
     statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`;
     statusMsg.style.color = "#3498db";
 
-    // 3 Saniyelik Şampiyonlar Ligi Kutlama Efekti
     var duration = 3 * 1000;
     var end = Date.now() + duration;
 
     (function frame() {
-        confetti({
-            particleCount: 5,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#FFD700', '#FFFFFF', '#1E90FF'] // Altın, Beyaz, Mavi (ŞL renkleri)
-        });
-        confetti({
-            particleCount: 5,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#FFD700', '#FFFFFF', '#1E90FF']
-        });
-
-        if (Date.now() < end) {
-            requestAnimationFrame(frame);
-        }
+        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] });
+        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] });
+        if (Date.now() < end) requestAnimationFrame(frame);
     }());
 });
 
@@ -162,13 +176,10 @@ socket.on('gameOver', (data) => {
 const newGameBtn = document.getElementById('new-game-btn');
 const exitBtn = document.getElementById('exit-btn');
 
-exitBtn.addEventListener('click', () => {
-    window.location.reload(); 
-});
+exitBtn.addEventListener('click', () => { window.location.reload(); });
 
 newGameBtn.addEventListener('click', () => {
     socket.emit('playAgain', myRoomCode);
-    
     statusMsg.innerText = "Yeniden başlatılıyor...";
     statusMsg.style.color = "#fff";
 });
