@@ -37,3 +37,43 @@ button:hover { background-color: #2ecc71; transform: translateY(-1px); }
 #passButton { background-color: #e67e22; }
 #passButton:hover { background-color: #d35400; }
 #passButton:disabled { background-color: #7f8c8d; cursor: not-allowed; }
+
+/* --- OYUN İÇİ KONTROL BUTONLARI --- */
+.game-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 15px;
+    z-index: 100;
+}
+
+.game-controls button {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+#new-game-btn {
+    background-color: #f39c12;
+}
+
+#new-game-btn:hover {
+    background-color: #d68910;
+    transform: translateY(-2px);
+}
+
+#exit-btn {
+    background-color: #e74c3c;
+}
+
+#exit-btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
