@@ -7,7 +7,7 @@ body {
     background-repeat: no-repeat;
     background-attachment: fixed;
     color: #fff; 
-    overflow: hidden; 
+    overflow: hidden; /* Masaüstünde her şey ekrana sığdığı için kaydırma barını gizler */
     display: flex; 
     justify-content: center; 
     align-items: center; 
@@ -51,18 +51,42 @@ button:hover { background-color: #2ecc71; transform: translateY(-1px); }
 #exit-btn { background-color: #e74c3c; }
 #exit-btn:hover { background-color: #c0392b; transform: translateY(-2px); }
 
-/* --- YENİ: LİDERLİK TABLOSU --- */
+/* --- LİDERLİK TABLOSU --- */
 #leaderboard-container { position: absolute; top: 20px; left: 20px; background: rgba(0, 0, 0, 0.7); padding: 15px; border-radius: 10px; border: 2px solid #f1c40f; box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3); z-index: 100; width: 220px; }
 #leaderboard-container h3 { color: #f1c40f; font-size: 1.2rem; margin-bottom: 10px; text-align: center; text-shadow: 0 2px 2px rgba(0,0,0,0.8); }
 #leaderboard-list { list-style: none; color: white; font-weight: bold; }
 #leaderboard-list li { margin-bottom: 8px; font-size: 1rem; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 4px; display: flex; justify-content: space-between;}
 #leaderboard-list li span:last-child { color: #2ecc71; }
 
+/* --- MOBİL EKRAN OPTİMİZASYONU --- */
 @media (max-width: 800px) {
-    .game-controls { position: relative; bottom: auto; right: auto; margin-top: 30px; justify-content: center; width: 100%; }
+    body { 
+        height: auto; 
+        min-height: 100vh; 
+        overflow-y: auto; /* Mobilde her şeyin sığması için dikey kaydırmayı açıyoruz */
+        padding: 20px 0; 
+        align-items: flex-start; /* Elemanların yukarıdan kırpılmasını engeller */
+    }
+
+    .screen { margin-top: 10px; }
+
+    .game-controls { position: relative; bottom: auto; right: auto; margin-top: 20px; justify-content: center; width: 100%; order: 5; }
     .game-controls button { padding: 8px 15px; font-size: 12px; margin: 0 5px; }
-    #timer-display { width: 60px; height: 60px; font-size: 2rem; border: 2px solid #2ecc71; }
     
-    /* Liderlik tablosunu mobilde merkeze alıyoruz */
-    #leaderboard-container { position: relative; top: auto; left: auto; margin: 0 auto 20px auto; width: 100%; max-width: 300px; }
+    #timer-display { width: 60px; height: 60px; font-size: 2rem; border: 2px solid #2ecc71; margin-bottom: 15px; }
+    
+    .teams-container { margin-bottom: 20px; }
+    .team-box { padding: 10px; font-size: 1.2rem; min-height: 80px; }
+    
+    /* Liderlik tablosunu mobilde oyun alanının EN ALTINA alıyoruz */
+    #leaderboard-container { 
+        position: relative; 
+        top: auto; 
+        left: auto; 
+        margin: 30px auto 0 auto; 
+        width: 100%; 
+        max-width: 300px; 
+        order: 10; /* Flexbox sıralamasını kullanarak en sona atar */
+        padding: 10px; 
+    }
 }
