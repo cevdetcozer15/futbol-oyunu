@@ -72,7 +72,23 @@ button:hover { background-color: #2ecc71; transform: translateY(-1px); }
 #exit-btn {
     background-color: #e74c3c;
 }
-
+/* --- MOBİL EKRAN OPTİMİZASYONU --- */
+@media (max-width: 600px) {
+    .game-controls {
+        position: relative; /* Sağ alttan kurtarıp normal akışa alıyoruz */
+        bottom: auto;
+        right: auto;
+        margin-top: 30px; /* Pas geç butonu ile arasına boşluk bırakıyoruz */
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .game-controls button {
+        padding: 8px 15px; /* Mobilde butonları daha zarif hale getiriyoruz */
+        font-size: 12px; /* Yazı boyutunu küçültüyoruz */
+        margin: 0 5px; /* İki buton arasına ufak bir nefes payı */
+    }
+}
 #exit-btn:hover {
     background-color: #c0392b;
     transform: translateY(-2px);
