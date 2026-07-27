@@ -1,4 +1,5 @@
-// Ülke isimlerini bayrak kodlarına çeviren sözlük
+const socket = io();
+
 const countryFlags = {
     "arjantin": "ar", "belçika": "be", "uruguay": "uy", "italya": "it",
     "bosna hersek": "ba", "sırbistan": "rs", "ingiltere": "gb-eng",
@@ -17,7 +18,6 @@ const countryFlags = {
     "karadağ": "me", "avusturya": "at", "ukrayna": "ua", "gine": "gn",
     "kanada": "ca", "kuzey makedonya": "mk", "romanya": "ro"
 };
-const socket = io();
 
 const screens = { lobby: document.getElementById('lobby'), waiting: document.getElementById('waiting'), game: document.getElementById('game') };
 const statusMsg = document.getElementById('status-message');
@@ -41,9 +41,8 @@ let isSinglePlayerMode = false;
 let isFirstRoundSP = true;
 let spTimerLeft = 120;
 let spGlobalInterval;
-let pendingTarget = ""; // "single" veya "multi"
+let pendingTarget = ""; 
 
-// Mod Seçimi Menüsünü Aç/Kapat
 function showModeSelection(target) {
     pendingTarget = target;
     lobbyActions.style.display = 'none';
@@ -156,11 +155,14 @@ socket.on('newRound', (teams) => {
             clearInterval(interval);
             statusMsg.innerText = "YAZ!";
             statusMsg.style.color = "#f1c40f";
-            // YENİ: Takım - Ülke modundaysak bayrak ikonunu HTML olarak kutuya ekle
+            
+            // TAKIM VE ÜLKE BAYRAĞI BÖLÜMÜ
             teamABox.innerText = teams.teamA.toUpperCase();
             
             if (teams.mode === 'country') {
-                let countryCode = countryFlags[teams.teamB.toLowerCase()];
+                let countryKey = teams.teamB.toLowerCase().trim();
+                let countryCode = countryFlags[countryKey];
+                
                 if (countryCode) {
                     teamBBox.innerHTML = `<img src="https://flagcdn.com/w40/${countryCode}.png" alt="${teams.teamB}" style="height: 30px; margin-right: 10px; vertical-align: middle; border-radius: 4px;"> ${teams.teamB.toUpperCase()}`;
                 } else {
@@ -169,7 +171,7 @@ socket.on('newRound', (teams) => {
             } else {
                 teamBBox.innerText = teams.teamB.toUpperCase();
             }
-            teamBBox.innerText = teams.teamB.toUpperCase();
+
             actionArea.style.display = 'flex';
             answerInput.value = "";
             answerInput.focus();
