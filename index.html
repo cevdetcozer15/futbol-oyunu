@@ -10,8 +10,8 @@
     <!-- Lobi Ekranı -->
     <div id="lobby" class="screen active">
         <h1>Ortak Futbolcuyu Bul!</h1>
-       <!-- Lobi Ekranı içindeki isim kısmı -->
-        <input type="text" id="playerName" placeholder="Adını Yaz (Max 12 Harf)" maxlength="12">
+        <input type="text" id="playerName" placeholder="Adını Yaz">
+
         <div class="lobby-actions">
             <button id="singlePlayerBtn">Tek Oyuncu (Süreli)</button>
             <button id="createRoomBtn">Oda Kur (Çoklu)</button>
@@ -81,7 +81,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-    <script src="app.js?v=8"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <!-- GÜNCELLENDİ: v=7 -->
     <script src="app.js?v=7"></script>
 </body>
