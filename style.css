@@ -48,8 +48,8 @@ button:hover { background-color: #2ecc71; transform: translateY(-1px); }
 .game-controls button { padding: 10px 20px; font-size: 14px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
 #new-game-btn { background-color: #f39c12; }
 #new-game-btn:hover { background-color: #d68910; transform: translateY(-2px); }
-#exit-btn { background-color: #e74c3c; }
-#exit-btn:hover { background-color: #c0392b; transform: translateY(-2px); }
+#exit-btn, #waiting-exit-btn { background-color: #e74c3c; }
+#exit-btn:hover, #waiting-exit-btn:hover { background-color: #c0392b; transform: translateY(-2px); }
 
 /* --- LİDERLİK TABLOSU --- */
 #leaderboard-container { position: absolute; top: 20px; left: 20px; background: rgba(0, 0, 0, 0.7); padding: 15px; border-radius: 10px; border: 2px solid #f1c40f; box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3); z-index: 100; width: 220px; }
