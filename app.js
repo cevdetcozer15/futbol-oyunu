@@ -32,6 +32,7 @@ const leaderboardList = document.getElementById('leaderboard-list');
 
 const lobbyActions = document.querySelector('.lobby-actions');
 const modeSelection = document.getElementById('mode-selection');
+const subModeSelection = document.getElementById('sub-mode-selection');
 
 let myRoomCode = "";
 let isRoundActive = false;
@@ -43,24 +44,43 @@ let spTimerLeft = 120;
 let spGlobalInterval;
 let pendingTarget = ""; 
 
+// --- MENÜ GEÇİŞ FONKSİYONLARI ---
 function showModeSelection(target) {
     pendingTarget = target;
     lobbyActions.style.display = 'none';
+    subModeSelection.style.display = 'none';
     modeSelection.style.display = 'flex';
 }
 
 function hideModeSelection() {
     pendingTarget = "";
     modeSelection.style.display = 'none';
+    subModeSelection.style.display = 'none';
     lobbyActions.style.display = 'flex';
+}
+
+function showSubModeSelection() {
+    modeSelection.style.display = 'none';
+    subModeSelection.style.display = 'flex';
+}
+
+function goBackToModeSelection() {
+    subModeSelection.style.display = 'none';
+    modeSelection.style.display = 'flex';
 }
 
 document.getElementById('singlePlayerBtn').addEventListener('click', () => showModeSelection("single"));
 document.getElementById('createRoomBtn').addEventListener('click', () => showModeSelection("multi"));
 document.getElementById('cancelModeBtn').addEventListener('click', hideModeSelection);
+document.getElementById('backModeBtn').addEventListener('click', goBackToModeSelection);
 
-document.getElementById('modeTeamsBtn').addEventListener('click', () => startWithMode('teams'));
+// 1. Aşama Butonları
+document.getElementById('modeTeamsBtn').addEventListener('click', showSubModeSelection); 
 document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
+
+// 2. Aşama Butonları (Alt Menü)
+document.getElementById('modeNormalBtn').addEventListener('click', () => startWithMode('teams'));
+document.getElementById('modeSuperLigBtn').addEventListener('click', () => startWithMode('superlig'));
 
 function startWithMode(selectedMode) {
     const nameInput = document.getElementById('playerName').value;
@@ -156,7 +176,6 @@ socket.on('newRound', (teams) => {
             statusMsg.innerText = "YAZ!";
             statusMsg.style.color = "#f1c40f";
             
-            // TAKIM VE ÜLKE BAYRAĞI BÖLÜMÜ
             teamABox.innerText = teams.teamA.toUpperCase();
             
             if (teams.mode === 'country') {
