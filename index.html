@@ -10,7 +10,7 @@
     <!-- Lobi Ekranı -->
     <div id="lobby" class="screen active">
         <h1>Ortak Futbolcuyu Bul!</h1>
-        <input type="text" id="playerName" placeholder="Adını Yaz">
+        <input type="text" id="playerName" placeholder="Adını Yaz (Max 12 Harf)" maxlength="12">
 
         <div class="lobby-actions">
             <button id="singlePlayerBtn">Tek Oyuncu (Süreli)</button>
@@ -22,12 +22,20 @@
             </div>
         </div>
 
-        <!-- Mod Seçim Ekranı -->
+        <!-- 1. AŞAMA: Ana Mod Seçim Ekranı -->
         <div id="mode-selection" style="display: none;" class="mode-container">
             <h3>Oyun Modunu Seç</h3>
             <button id="modeTeamsBtn" class="mode-btn">⚔️ Takım - Takım</button>
             <button id="modeCountryBtn" class="mode-btn">🌍 Takım - Ülke</button>
-            <button id="cancelModeBtn" class="cancel-btn">❌ İptal</button>
+            <button id="cancelModeBtn" class="cancel-btn" style="margin-top: 10px;">❌ İptal</button>
+        </div>
+
+        <!-- 2. AŞAMA: Takım - Takım Alt Menüsü -->
+        <div id="sub-mode-selection" style="display: none;" class="mode-container">
+            <h3>Lig Seçimi</h3>
+            <button id="modeNormalBtn" class="mode-btn">🌍 Normal Oyun (Klasik)</button>
+            <button id="modeSuperLigBtn" class="mode-btn" style="background-color: #e74c3c;">🇹🇷 Süper Lig Modu</button>
+            <button id="backModeBtn" class="cancel-btn" style="margin-top: 10px;">⬅️ Geri</button>
         </div>
 
         <div id="lobby-message"></div>
@@ -82,7 +90,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <!-- GÜNCELLENDİ: v=7 -->
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=11"></script>
 </body>
 </html>
