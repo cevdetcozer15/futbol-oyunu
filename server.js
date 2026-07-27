@@ -9,9 +9,11 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
-const db = require('./futbolcular.json');
+// YENİ: İki farklı veritabanını da içeri aktarıyoruz
+const dbClassic = require('./futbolcular.json');
+const dbSuperLig = require('./superlig.json'); 
 
-// --- LİDERLİK TABLOSU YÖNETİMİ (Yerel Dosya Sistemi) ---
+// --- LİDERLİK TABLOSU YÖNETİMİ ---
 let topScores = [];
 const LEADERBOARD_FILE = './leaderboard.json';
 
@@ -114,33 +116,17 @@ io.on('connection', (socket) => {
 
         let randomPlayer;
 
+        // YENİ: Hangi veritabanının kullanılacağını seçiyoruz
         if (room.gameMode === 'superlig') {
-            const superLigTakimlari = [
-                "galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor", "başakşehir", 
-                "kasımpaşa", "antalyaspor", "adana demirspor", "sivasspor", "ankaragücü", 
-                "konyaspor", "kayserispor", "rizespor", "göztepe", "karagümrük", 
-                "bursaspor", "manisaspor", "gençlerbirliği", "gaziantepspor", 
-                "kayseri erciyesspor", "yeni malatyaspor", "istanbulspor", "alanyaspor", "sakaryaspor"
-            ];
-
-            const slPlayers = db.filter(p => p.teams.some(t => superLigTakimlari.includes(t)) && p.teams.length > 1);
-            randomPlayer = slPlayers[Math.floor(Math.random() * slPlayers.length)];
+            randomPlayer = dbSuperLig[Math.floor(Math.random() * dbSuperLig.length)];
             
-            const playerSLTeams = randomPlayer.teams.filter(t => superLigTakimlari.includes(t));
-            const selectedSLTeam = playerSLTeams[Math.floor(Math.random() * playerSLTeams.length)];
+            // Süper lig dosyasından rastgele iki takım çek
+            const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
+            room.currentTeamA = shuffledTeams[0];
+            room.currentTeamB = shuffledTeams[1];
             
-            const otherTeams = randomPlayer.teams.filter(t => t !== selectedSLTeam);
-            const selectedOtherTeam = otherTeams[Math.floor(Math.random() * otherTeams.length)];
-
-            if (Math.random() > 0.5) {
-                room.currentTeamA = selectedSLTeam;
-                room.currentTeamB = selectedOtherTeam;
-            } else {
-                room.currentTeamA = selectedOtherTeam;
-                room.currentTeamB = selectedSLTeam;
-            }
         } else {
-            randomPlayer = db[Math.floor(Math.random() * db.length)];
+            randomPlayer = dbClassic[Math.floor(Math.random() * dbClassic.length)];
             
             if (room.gameMode === 'country') {
                 const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
@@ -179,7 +165,11 @@ io.on('connection', (socket) => {
         if (!room || !room.roundActive) return;
 
         const cleanedAnswer = cleanText(answer.trim());
-        const matchedPlayer = db.find(p => {
+        
+        // YENİ: Cevap kontrolü yaparken aktif veritabanını kullan
+        const activeDB = room.gameMode === 'superlig' ? dbSuperLig : dbClassic;
+
+        const matchedPlayer = activeDB.find(p => {
             const cleanPlayerName = cleanText(p.name);
 
             if (room.gameMode === 'country') {
