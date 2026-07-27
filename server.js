@@ -9,7 +9,6 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
-// YENİ: İki farklı veritabanını da içeri aktarıyoruz
 const dbClassic = require('./futbolcular.json');
 const dbSuperLig = require('./superlig.json'); 
 
@@ -68,6 +67,7 @@ io.on('connection', (socket) => {
             roundActive: false,
             currentTeamA: "",
             currentTeamB: "",
+            correctAnswer: "", // YENİ: Doğru cevabı odada tutuyoruz
             passVotes: 0
         };
         socket.join(roomCode);
@@ -84,6 +84,7 @@ io.on('connection', (socket) => {
             roundActive: false,
             currentTeamA: "",
             currentTeamB: "",
+            correctAnswer: "", // YENİ: Doğru cevabı odada tutuyoruz
             passVotes: 0,
             roundTimer: null
         };
@@ -116,15 +117,11 @@ io.on('connection', (socket) => {
 
         let randomPlayer;
 
-        // YENİ: Hangi veritabanının kullanılacağını seçiyoruz
         if (room.gameMode === 'superlig') {
             randomPlayer = dbSuperLig[Math.floor(Math.random() * dbSuperLig.length)];
-            
-            // Süper lig dosyasından rastgele iki takım çek
             const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
             room.currentTeamA = shuffledTeams[0];
             room.currentTeamB = shuffledTeams[1];
-            
         } else {
             randomPlayer = dbClassic[Math.floor(Math.random() * dbClassic.length)];
             
@@ -139,6 +136,8 @@ io.on('connection', (socket) => {
             }
         }
 
+        // YENİ: Seçilen adamın ismini hafızaya yazıyoruz ki 'pas' geçilince gösterebilelim
+        room.correctAnswer = randomPlayer.name.toUpperCase();
         room.roundActive = true;
 
         io.to(roomCode).emit('newRound', { 
@@ -151,7 +150,7 @@ io.on('connection', (socket) => {
             room.roundTimer = setTimeout(() => {
                 if(room.roundActive) {
                     room.roundActive = false;
-                    io.to(roomCode).emit('timeUp', { correctPlayer: randomPlayer.name.toUpperCase() });
+                    io.to(roomCode).emit('timeUp', { correctPlayer: room.correctAnswer });
                     setTimeout(() => { startRound(roomCode); }, 4000);
                 }
             }, 33000);
@@ -165,8 +164,6 @@ io.on('connection', (socket) => {
         if (!room || !room.roundActive) return;
 
         const cleanedAnswer = cleanText(answer.trim());
-        
-        // YENİ: Cevap kontrolü yaparken aktif veritabanını kullan
         const activeDB = room.gameMode === 'superlig' ? dbSuperLig : dbClassic;
 
         const matchedPlayer = activeDB.find(p => {
@@ -224,13 +221,17 @@ io.on('connection', (socket) => {
 
         if (room.isSinglePlayer) {
             room.roundActive = false;
-            startRound(roomCode);
+            // YENİ: Saniyesinde başlatmak yerine önce cevabı gönderip 1.5 sn bekliyoruz
+            io.to(roomCode).emit('roundPassed', { correctPlayer: room.correctAnswer });
+            setTimeout(() => { startRound(roomCode); }, 1500);
         } else {
             room.passVotes++; 
             if (room.passVotes >= 2) {
                 room.roundActive = false; 
                 clearTimeout(room.roundTimer);
-                startRound(roomCode);
+                // YENİ: Çok oyunculu modda da aynı mantık
+                io.to(roomCode).emit('roundPassed', { correctPlayer: room.correctAnswer });
+                setTimeout(() => { startRound(roomCode); }, 1500);
             }
         }
     });
@@ -275,7 +276,6 @@ server.listen(port, () => {
     console.log('Hakem (Sunucu) sahaya çıktı!');
 });
 
-// --- SUNUCUYU UYANIK TUTMA KODU (5 DAKİKA PING) ---
 const https = require('https');
 
 setInterval(() => {
