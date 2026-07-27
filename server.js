@@ -115,12 +115,10 @@ io.on('connection', (socket) => {
         const randomPlayer = db[Math.floor(Math.random() * db.length)];
 
         if (room.gameMode === 'country') {
-            // Takım - Ülke Modu
             const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
             room.currentTeamA = randomTeam;
             room.currentTeamB = randomPlayer.country;
         } else {
-            // Takım - Takım Modu
             const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
             room.currentTeamA = shuffledTeams[0];
             room.currentTeamB = shuffledTeams[1];
@@ -128,7 +126,6 @@ io.on('connection', (socket) => {
 
         room.roundActive = true;
 
-        // YENİ: Oyun modunu da (gameMode) ön yüze gönderiyoruz
         io.to(roomCode).emit('newRound', { 
             teamA: room.currentTeamA, 
             teamB: room.currentTeamB,
@@ -259,7 +256,6 @@ server.listen(port, () => {
     console.log('Hakem (Sunucu) sahaya çıktı!');
 });
 
-// --- SUNUCUYU UYANIK TUTMA KODU (5 DAKİKA PING) ---
 const https = require('https');
 
 setInterval(() => {
