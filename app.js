@@ -156,7 +156,19 @@ socket.on('newRound', (teams) => {
             clearInterval(interval);
             statusMsg.innerText = "YAZ!";
             statusMsg.style.color = "#f1c40f";
+            // YENİ: Takım - Ülke modundaysak bayrak ikonunu HTML olarak kutuya ekle
             teamABox.innerText = teams.teamA.toUpperCase();
+            
+            if (teams.mode === 'country') {
+                let countryCode = countryFlags[teams.teamB.toLowerCase()];
+                if (countryCode) {
+                    teamBBox.innerHTML = `<img src="https://flagcdn.com/w40/${countryCode}.png" alt="${teams.teamB}" style="height: 30px; margin-right: 10px; vertical-align: middle; border-radius: 4px;"> ${teams.teamB.toUpperCase()}`;
+                } else {
+                    teamBBox.innerText = teams.teamB.toUpperCase();
+                }
+            } else {
+                teamBBox.innerText = teams.teamB.toUpperCase();
+            }
             teamBBox.innerText = teams.teamB.toUpperCase();
             actionArea.style.display = 'flex';
             answerInput.value = "";
