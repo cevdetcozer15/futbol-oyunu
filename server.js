@@ -35,6 +35,7 @@ function updateLeaderboard(playerName, score) {
 }
 
 function cleanText(text) {
+    if(!text) return "";
     return text.toLowerCase()
         .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i')
         .replace(/ö/g, 'o').replace(/ç/g, 'c')
@@ -56,10 +57,11 @@ io.on('connection', (socket) => {
 
     socket.emit('updateLeaderboard', topScores);
 
-    socket.on('createSinglePlayer', (playerName) => {
+    socket.on('createSinglePlayer', ({ playerName, gameMode }) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = {
             isSinglePlayer: true,
+            gameMode: gameMode || 'teams',
             players: [{ id: socket.id, name: playerName, score: 0 }],
             roundActive: false,
             currentTeamA: "",
@@ -71,10 +73,11 @@ io.on('connection', (socket) => {
         startRound(roomCode);
     });
 
-    socket.on('createRoom', (playerName) => {
+    socket.on('createRoom', ({ playerName, gameMode }) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = {
             isSinglePlayer: false,
+            gameMode: gameMode || 'teams',
             players: [{ id: socket.id, name: playerName, score: 0 }],
             roundActive: false,
             currentTeamA: "",
@@ -110,9 +113,19 @@ io.on('connection', (socket) => {
         clearTimeout(room.roundTimer); 
 
         const randomPlayer = db[Math.floor(Math.random() * db.length)];
-        const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
-        room.currentTeamA = shuffledTeams[0];
-        room.currentTeamB = shuffledTeams[1];
+
+        if (room.gameMode === 'country') {
+            // Takım - Ülke Modu
+            const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
+            room.currentTeamA = randomTeam;
+            room.currentTeamB = randomPlayer.country;
+        } else {
+            // Takım - Takım Modu
+            const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
+            room.currentTeamA = shuffledTeams[0];
+            room.currentTeamB = shuffledTeams[1];
+        }
+
         room.roundActive = true;
 
         io.to(roomCode).emit('newRound', { 
@@ -140,9 +153,16 @@ io.on('connection', (socket) => {
         const cleanedAnswer = cleanText(answer.trim());
         const matchedPlayer = db.find(p => {
             const cleanPlayerName = cleanText(p.name);
-            return cleanPlayerName.includes(cleanedAnswer) && 
-                   p.teams.includes(room.currentTeamA) && 
-                   p.teams.includes(room.currentTeamB);
+
+            if (room.gameMode === 'country') {
+                return cleanPlayerName.includes(cleanedAnswer) && 
+                       p.teams.includes(room.currentTeamA) && 
+                       cleanText(p.country) === cleanText(room.currentTeamB);
+            } else {
+                return cleanPlayerName.includes(cleanedAnswer) && 
+                       p.teams.includes(room.currentTeamA) && 
+                       p.teams.includes(room.currentTeamB);
+            }
         });
 
         if (matchedPlayer && cleanedAnswer.length > 2) {
