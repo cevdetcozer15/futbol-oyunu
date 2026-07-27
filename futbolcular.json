@@ -175,7 +175,7 @@
     { "name": "Dani Olmo", "country": "ispanya", "teams": ["rb leipzig", "barcelona"] },
     { "name": "Ferran Torres", "country": "ispanya", "teams": ["valencia", "psg", "barcelona"] },
     { "name": "Brahim Díaz", "country": "fas", "teams": ["manchester city", "real madrid", "ac milan"] },
-    { "name": "Arda Güler", "country": "türkiye", "teams": ["fenerbahçe", "real madrid"] },
+    { "name": "Arda Güler", "country": "türkiye", "teams": ["gençlerbirliği","fenerbahçe", "real madrid"] },
     { "name": "David Alaba", "country": "avusturya", "teams": ["bayern münih", "hoffenheim", "real madrid"] },
     { "name": "Éder Militão", "country": "brezilya", "teams": ["porto", "real madrid"] },
     { "name": "Endrick", "country": "brezilya", "teams": ["palmeiras", "real madrid", "lille"] },
