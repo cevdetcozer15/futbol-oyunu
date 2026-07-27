@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kesişim: Futbol Online</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
     <!-- Lobi Ekranı -->
@@ -15,11 +15,21 @@
         <div class="lobby-actions">
             <button id="singlePlayerBtn">Tek Oyuncu (Süreli)</button>
             <button id="createRoomBtn">Oda Kur (Çoklu)</button>
+            
             <div class="join-section">
                 <input type="text" id="roomCodeInput" placeholder="Oda Kodu Gir">
                 <button id="joinRoomBtn">Katıl</button>
             </div>
         </div>
+
+        <!-- Mod Seçim Ekranı (Gizli Başlar) -->
+        <div id="mode-selection" style="display: none;" class="mode-container">
+            <h3>Oyun Modunu Seç</h3>
+            <button id="modeTeamsBtn" class="mode-btn">⚔️ Takım - Takım</button>
+            <button id="modeCountryBtn" class="mode-btn">🌍 Takım - Ülke</button>
+            <button id="cancelModeBtn" class="cancel-btn">❌ İptal</button>
+        </div>
+
         <div id="lobby-message"></div>
     </div>
 
@@ -30,7 +40,6 @@
         <div class="room-code-display" id="displayRoomCode">---</div>
         <p>Bekleniyor...</p>
 
-        <!-- YENİ: Bekleme Ekranı Çıkış Butonu -->
         <div class="game-controls">
             <button id="waiting-exit-btn">🚪 Çıkış</button>
         </div>
@@ -38,8 +47,6 @@
 
     <!-- Oyun Ekranı -->
     <div id="game" class="screen">
-        
-        <!-- YENİ: Top Skorer Tablosu (Sadece Tek Oyunculu Modda Görünecek) -->
         <div id="leaderboard-container" style="display: none;">
             <h3>🏆 Top 5 Skorer</h3>
             <ul id="leaderboard-list">
@@ -54,7 +61,6 @@
 
         <div id="status-message">Hazır olun...</div>
 
-        <!-- Sayaç -->
         <div id="timer-display" style="display: none;">30</div>
 
         <div class="teams-container">
@@ -68,7 +74,6 @@
             <button id="passButton">Pas Geç ⏭️</button>
         </div>
 
-        <!-- Oyun İçi Kontrol Butonları -->
         <div class="game-controls">
             <button id="new-game-btn">🔄 Yeni Oyun</button>
             <button id="exit-btn">🚪 Çıkış</button>
@@ -77,6 +82,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>
