@@ -1,0 +1,12 @@
+[
+    { "name": "Pablo Batalla", "country": "arjantin", "teams": ["bursaspor", "velez sarsfield", "beijing guoan"] },
+    { "name": "Pascal Nouma", "country": "fransa", "teams": ["beşiktaş", "psg", "marseille", "lens"] },
+    { "name": "Ibrahima Yattara", "country": "gine", "teams": ["trabzonspor", "antwerp", "al shabab", "mersin idmanyurdu"] },
+    { "name": "Aatif Chahechouhe", "country": "fas", "teams": ["sivasspor", "fenerbahçe", "antalyaspor", "çaykur rizespor", "karagümrük"] },
+    { "name": "Shota Arveladze", "country": "gürcistan", "teams": ["trabzonspor", "ajax", "rangers", "az alkmaar"] },
+    { "name": "Cassio Lincoln", "country": "brezilya", "teams": ["galatasaray", "schalke", "palmeiras", "kaiserslautern"] },
+    { "name": "Gekas", "country": "yunanistan", "teams": ["akhisarspor", "konyaspor", "samsunspor", "bayer leverkusen", "panathinaikos"] },
+    { "name": "Bobo", "country": "brezilya", "teams": ["beşiktaş", "corinthians", "kayserispor", "sydney fc"] },
+    { "name": "Moussa Sow", "country": "senegal", "teams": ["lille", "fenerbahçe", "al ahli", "bursaspor", "gaziantep"] },
+    { "name": "Mario Jardel", "country": "brezilya", "teams": ["porto", "galatasaray", "sporting", "bolton"] }
+]
