@@ -128,9 +128,11 @@ io.on('connection', (socket) => {
 
         room.roundActive = true;
 
+        // YENİ: Oyun modunu da (gameMode) ön yüze gönderiyoruz
         io.to(roomCode).emit('newRound', { 
             teamA: room.currentTeamA, 
-            teamB: room.currentTeamB 
+            teamB: room.currentTeamB,
+            mode: room.gameMode 
         });
 
         if (!room.isSinglePlayer) {
