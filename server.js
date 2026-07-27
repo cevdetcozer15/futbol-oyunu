@@ -67,7 +67,7 @@ io.on('connection', (socket) => {
             roundActive: false,
             currentTeamA: "",
             currentTeamB: "",
-            correctAnswer: "", // YENİ: Doğru cevabı odada tutuyoruz
+            correctAnswer: "", 
             passVotes: 0
         };
         socket.join(roomCode);
@@ -84,7 +84,7 @@ io.on('connection', (socket) => {
             roundActive: false,
             currentTeamA: "",
             currentTeamB: "",
-            correctAnswer: "", // YENİ: Doğru cevabı odada tutuyoruz
+            correctAnswer: "", 
             passVotes: 0,
             roundTimer: null
         };
@@ -136,7 +136,6 @@ io.on('connection', (socket) => {
             }
         }
 
-        // YENİ: Seçilen adamın ismini hafızaya yazıyoruz ki 'pas' geçilince gösterebilelim
         room.correctAnswer = randomPlayer.name.toUpperCase();
         room.roundActive = true;
 
@@ -221,17 +220,17 @@ io.on('connection', (socket) => {
 
         if (room.isSinglePlayer) {
             room.roundActive = false;
-            // YENİ: Saniyesinde başlatmak yerine önce cevabı gönderip 1.5 sn bekliyoruz
             io.to(roomCode).emit('roundPassed', { correctPlayer: room.correctAnswer });
-            setTimeout(() => { startRound(roomCode); }, 1500);
+            // SÜRE 4 SANİYE (4000ms) OLARAK GÜNCELLENDİ
+            setTimeout(() => { startRound(roomCode); }, 4000);
         } else {
             room.passVotes++; 
             if (room.passVotes >= 2) {
                 room.roundActive = false; 
                 clearTimeout(room.roundTimer);
-                // YENİ: Çok oyunculu modda da aynı mantık
                 io.to(roomCode).emit('roundPassed', { correctPlayer: room.correctAnswer });
-                setTimeout(() => { startRound(roomCode); }, 1500);
+                // SÜRE 4 SANİYE (4000ms) OLARAK GÜNCELLENDİ
+                setTimeout(() => { startRound(roomCode); }, 4000);
             }
         }
     });
