@@ -62,9 +62,9 @@ button:hover { background-color: #2ecc71; transform: translateY(-1px); }
 #leaderboard-container { position: absolute; top: 20px; left: 20px; background: rgba(0, 0, 0, 0.7); padding: 15px; border-radius: 10px; border: 2px solid #f1c40f; box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3); z-index: 100; width: 220px; }
 #leaderboard-container h3 { color: #f1c40f; font-size: 1.2rem; margin-bottom: 10px; text-align: center; text-shadow: 0 2px 2px rgba(0,0,0,0.8); }
 #leaderboard-list { list-style: none; color: white; font-weight: bold; }
-#leaderboard-list li { margin-bottom: 8px; font-size: 1rem; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 4px; display: flex; justify-content: space-between;}
-#leaderboard-list li span:last-child { color: #2ecc71; }
-
+#leaderboard-list li { margin-bottom: 8px; font-size: 1rem; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;}
+#leaderboard-list li span:first-child { display: inline-block; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#leaderboard-list li span:last-child { color: #2ecc71; flex-shrink: 0; margin-left: 10px; font-weight: bold; }
 @media (max-width: 800px) {
     body { height: auto; min-height: 100vh; overflow-y: auto; padding: 20px 0; align-items: flex-start; }
     .screen { margin-top: 10px; }
