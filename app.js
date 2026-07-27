@@ -44,7 +44,6 @@ let spTimerLeft = 120;
 let spGlobalInterval;
 let pendingTarget = ""; 
 
-// --- MENÜ GEÇİŞ FONKSİYONLARI ---
 function showModeSelection(target) {
     pendingTarget = target;
     lobbyActions.style.display = 'none';
@@ -74,11 +73,9 @@ document.getElementById('createRoomBtn').addEventListener('click', () => showMod
 document.getElementById('cancelModeBtn').addEventListener('click', hideModeSelection);
 document.getElementById('backModeBtn').addEventListener('click', goBackToModeSelection);
 
-// 1. Aşama Butonları
 document.getElementById('modeTeamsBtn').addEventListener('click', showSubModeSelection); 
 document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
 
-// 2. Aşama Butonları (Alt Menü)
 document.getElementById('modeNormalBtn').addEventListener('click', () => startWithMode('teams'));
 document.getElementById('modeSuperLigBtn').addEventListener('click', () => startWithMode('superlig'));
 
@@ -244,6 +241,20 @@ passButton.addEventListener('click', () => {
     socket.emit('passVote', myRoomCode); 
     passButton.disabled = true;
     passButton.innerText = isSinglePlayerMode ? 'Geçiliyor...' : 'Rakip Bekleniyor... ⏳';
+});
+
+// YENİ: Pas geçildiğinde gösterilecek özel alan
+socket.on('roundPassed', (data) => {
+    isRoundActive = false;
+    if (!isSinglePlayerMode) {
+        clearInterval(countdownInterval);
+        timerDisplay.style.display = 'none';
+    }
+    actionArea.style.display = 'none';
+    
+    // "SÜRE BİTTİ" veya süre yazısı olmadan sadece sonucu ve pas geçildiğini gösteriyoruz
+    statusMsg.innerText = `PAS GEÇİLDİ ⏭️\nCevap: ${data.correctPlayer}`;
+    statusMsg.style.color = "#f39c12"; // Sarı/Turuncu renk
 });
 
 socket.on('wrongAnswer', () => {
