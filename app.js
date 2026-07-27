@@ -246,3 +246,7 @@ const newGameBtn = document.getElementById('new-game-btn');
 const exitBtn = document.getElementById('exit-btn');
 exitBtn.addEventListener('click', () => { window.location.reload(); });
 newGameBtn.addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
+
+// Bekleme ekranındaki çıkış butonu
+const waitingExitBtn = document.getElementById('waiting-exit-btn');
+waitingExitBtn.addEventListener('click', () => { window.location.reload(); });
