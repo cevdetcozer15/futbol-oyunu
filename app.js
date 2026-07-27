@@ -1,3 +1,22 @@
+// Ülke isimlerini bayrak kodlarına çeviren sözlük
+const countryFlags = {
+    "arjantin": "ar", "belçika": "be", "uruguay": "uy", "italya": "it",
+    "bosna hersek": "ba", "sırbistan": "rs", "ingiltere": "gb-eng",
+    "mısır": "eg", "norveç": "no", "brezilya": "br", "polonya": "pl",
+    "fransa": "fr", "portekiz": "pt", "gürcistan": "ge", "isveç": "se",
+    "şili": "cl", "türkiye": "tr", "ispanya": "es", "hollanda": "nl",
+    "fildişi sahili": "ci", "kolombiya": "co", "almanya": "de",
+    "çekya": "cz", "cezayir": "dz", "fas": "ma", "hırvatistan": "hr",
+    "senegal": "sn", "galler": "gb-wls", "kamerun": "cm", "nijerya": "ng",
+    "güney kore": "kr", "macaristan": "hu", "ekvador": "ec", "gabon": "ga",
+    "isviçre": "ch", "danimarka": "dk", "abd": "us", "slovenya": "si",
+    "slovakya": "sk", "iskoçya": "gb-sct", "surinam": "sr", "iran": "ir",
+    "jamaika": "jm", "burkina faso": "bf", "japonya": "jp", "kosova": "xk",
+    "togo": "tg", "yeşil burun adaları": "cv", "yunanistan": "gr",
+    "arnavutluk": "al", "libya": "ly", "demokratik kongo cumhuriyeti": "cd",
+    "karadağ": "me", "avusturya": "at", "ukrayna": "ua", "gine": "gn",
+    "kanada": "ca", "kuzey makedonya": "mk", "romanya": "ro"
+};
 const socket = io();
 
 const screens = { lobby: document.getElementById('lobby'), waiting: document.getElementById('waiting'), game: document.getElementById('game') };
