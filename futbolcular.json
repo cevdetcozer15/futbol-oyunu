@@ -470,6 +470,23 @@
     { "name": "Islam Slimani", "teams": ["sporting", "leicester city", "newcastle united", "monaco", "lyon", "anderlecht", "fenerbahçe"] },
     { "name": "Andre Ayew", "teams": ["marseille", "fenerbahçe"] },
     { "name": "Miroslav Stoch", "teams": ["chelsea", "bursaspor" , "fenerbahçe"] },
-    { "name": "Colin Kazim-Richards", "teams": ["galatasaray", "fenerbahçe"] }
+    { "name": "Colin Kazim-Richards", "teams": ["galatasaray", "fenerbahçe"] },
+    { "name": "Florian Wirtz", "teams": ["köln", "bayer leverkusen", "liverpool"] },
+    { "name": "Denzel Dumfries", "teams": ["real madrid", "psv", "inter"] },
+    { "name": "Harry Maguire", "teams": ["leicester city", "manchester united"] },
+    { "name": "Declan Rice", "teams": ["west ham", "arsenal"] },
+    { "name": "Thiago Alcantara", "teams": ["barcelona", "bayern münih", "liverpool"] },
+    { "name": "Aymeric Laporte", "teams": ["athletic bilbao", "manchester city", "al nassr"] },
+    { "name": "Kepa Arrizabalaga", "teams": ["chelsea", "real madrid"] },
+    { "name": "Bruno Fernandes", "teams": ["sporting", "manchester united"] },
+    { "name": "Szczesny", "teams": ["arsenal", "roma", "juventus", "barcelona"] },
+    { "name": "Renato Sanches", "teams": ["benfica", "bayern münih", "lille", "psg", "roma"] },
+    { "name": "Antony", "teams": ["real sociedad", "ajax", "manchester united"] },
+    { "name": "John Stones", "teams": ["everton", "manchester city"] },
+    { "name": "Leon Goretzka", "teams": ["schalke", "bayern münih"] },
+    { "name": "Kingsley Coman", "teams": ["psg", "juventus", "bayern münih", "al nassr"] },
+    { "name": "Rodrygo", "teams": ["santos", "real madrid"] },
+    { "name": "Jesus Navas", "teams": ["sevilla", "manchester city"] },
+    { "name": "David de Gea", "teams": ["atletico madrid", "manchester united", "fiorentina"] }
 
 ]
