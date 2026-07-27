@@ -510,7 +510,7 @@
     { "name": "Esteban Cambiasso", "country": "arjantin", "teams": ["real madrid", "inter", "leicester city"] },
     { "name": "Kolo Toure", "country": "fildişi sahili", "teams": ["arsenal", "manchester city", "liverpool"] },
     { "name": "Keylor Navas", "country": "kosta rika", "teams": ["real madrid", "psg"] },
-    { "name": "Hugo Lloris", "country": "fransa", "teams": ["nice", "lyon", "tottenham""] },
+    { "name": "Hugo Lloris", "country": "fransa", "teams": ["nice", "lyon", "tottenham"] },
     { "name": "David Luiz", "country": "brezilya", "teams": ["benfica", "chelsea", "psg", "arsenal"] },
     { "name": "Leonardo Bonucci", "country": "italya", "teams": ["juventus", "ac milan","fenerbahçe"] },
     { "name": "Andrea Barzagli", "country": "italya", "teams": ["wolfsburg", "juventus"] },
