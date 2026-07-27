@@ -11,6 +11,9 @@ const timerDisplay = document.getElementById('timer-display');
 const leaderboardContainer = document.getElementById('leaderboard-container');
 const leaderboardList = document.getElementById('leaderboard-list');
 
+const lobbyActions = document.querySelector('.lobby-actions');
+const modeSelection = document.getElementById('mode-selection');
+
 let myRoomCode = "";
 let isRoundActive = false;
 let countdownInterval;
@@ -19,16 +22,40 @@ let isSinglePlayerMode = false;
 let isFirstRoundSP = true;
 let spTimerLeft = 120;
 let spGlobalInterval;
+let pendingTarget = ""; // "single" veya "multi"
 
-document.getElementById('singlePlayerBtn').addEventListener('click', () => {
-    const name = document.getElementById('playerName').value || "Oyuncu";
-    socket.emit('createSinglePlayer', name);
-});
+// Mod Seçimi Menüsünü Aç/Kapat
+function showModeSelection(target) {
+    pendingTarget = target;
+    lobbyActions.style.display = 'none';
+    modeSelection.style.display = 'flex';
+}
 
-document.getElementById('createRoomBtn').addEventListener('click', () => {
-    const name = document.getElementById('playerName').value || "Oyuncu 1";
-    socket.emit('createRoom', name);
-});
+function hideModeSelection() {
+    pendingTarget = "";
+    modeSelection.style.display = 'none';
+    lobbyActions.style.display = 'flex';
+}
+
+document.getElementById('singlePlayerBtn').addEventListener('click', () => showModeSelection("single"));
+document.getElementById('createRoomBtn').addEventListener('click', () => showModeSelection("multi"));
+document.getElementById('cancelModeBtn').addEventListener('click', hideModeSelection);
+
+document.getElementById('modeTeamsBtn').addEventListener('click', () => startWithMode('teams'));
+document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
+
+function startWithMode(selectedMode) {
+    const nameInput = document.getElementById('playerName').value;
+    
+    if (pendingTarget === "single") {
+        const name = nameInput || "Oyuncu";
+        socket.emit('createSinglePlayer', { playerName: name, gameMode: selectedMode });
+    } else if (pendingTarget === "multi") {
+        const name = nameInput || "Oyuncu 1";
+        socket.emit('createRoom', { playerName: name, gameMode: selectedMode });
+    }
+    hideModeSelection();
+}
 
 document.getElementById('joinRoomBtn').addEventListener('click', () => {
     const name = document.getElementById('playerName').value || "Oyuncu 2";
@@ -53,7 +80,7 @@ socket.on('gameReady', (players) => {
     document.getElementById('p1-name').innerText = players.p1;
     document.getElementById('p2-name').innerText = players.p2;
     document.getElementById('p2-score-container').style.display = 'block';
-    leaderboardContainer.style.display = 'none'; // Çoklu oyuncuda tabloyu gizle
+    leaderboardContainer.style.display = 'none';
     screens.lobby.classList.remove('active');
     screens.waiting.classList.remove('active');
     screens.game.classList.add('active');
@@ -65,20 +92,18 @@ socket.on('gameReadySP', (data) => {
     myRoomCode = data.roomCode;
     document.getElementById('p1-name').innerText = data.p1;
     document.getElementById('p2-score-container').style.display = 'none'; 
-    leaderboardContainer.style.display = 'block'; // Tek oyuncuda tabloyu göster
+    leaderboardContainer.style.display = 'block';
     screens.lobby.classList.remove('active');
     screens.waiting.classList.remove('active');
     screens.game.classList.add('active');
 });
 
-// YENİ: Skor Tablosunu Güncelleme
 socket.on('updateLeaderboard', (topScores) => {
-    leaderboardList.innerHTML = ''; // Listeyi temizle
+    leaderboardList.innerHTML = '';
     if (topScores.length === 0) {
         leaderboardList.innerHTML = '<li>Henüz skor yok</li>';
         return;
     }
-    
     topScores.forEach((item, index) => {
         leaderboardList.innerHTML += `<li><span>${index + 1}. ${item.name}</span> <span>${item.score} P</span></li>`;
     });
@@ -129,9 +154,7 @@ socket.on('newRound', (teams) => {
                     spGlobalInterval = setInterval(() => {
                         spTimerLeft--;
                         timerDisplay.innerText = spTimerLeft;
-                        
                         if(spTimerLeft <= 10) timerDisplay.classList.add('timer-warning');
-                        
                         if(spTimerLeft <= 0) {
                             clearInterval(spGlobalInterval);
                             socket.emit('spTimeUp', myRoomCode);
@@ -244,9 +267,8 @@ socket.on('playAgainReady', () => {
 
 const newGameBtn = document.getElementById('new-game-btn');
 const exitBtn = document.getElementById('exit-btn');
-exitBtn.addEventListener('click', () => { window.location.reload(); });
-newGameBtn.addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
-
-// Bekleme ekranındaki çıkış butonu
 const waitingExitBtn = document.getElementById('waiting-exit-btn');
+
+exitBtn.addEventListener('click', () => { window.location.reload(); });
 waitingExitBtn.addEventListener('click', () => { window.location.reload(); });
+newGameBtn.addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
