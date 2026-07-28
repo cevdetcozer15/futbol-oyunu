@@ -70,13 +70,16 @@ function triggerTeamSelection(roomCode) {
 
 function nextTurn(roomCode) {
     const room = rooms[roomCode];
-    if(!room) return;
+    // YENİ: Oyun bittiyse (süre dolduysa) kesinlikle yeni tura geçme!
+    if(!room || room.isGameOver) return; 
     if(room.playStyle === 'custom') triggerTeamSelection(roomCode);
     else startRound(roomCode);
 }
 
 function startRound(roomCode) {
-    const room = rooms[roomCode]; if (!room) return;
+    const room = rooms[roomCode]; 
+    if (!room || room.isGameOver) return; // YENİ: Oyun bittiyse başlatma!
+
     room.passVotes = 0; clearTimeout(room.roundTimer); 
 
     const activeDB = getDB(room.gameMode);
@@ -85,7 +88,6 @@ function startRound(roomCode) {
     let randomPlayer;
 
     if (room.gameMode === 'superlig') {
-        // 4 Büyükler'de oynamış oyuncuları filtrele
         const big4Players = activeDB.filter(p => 
             p.teams.some(t => BIG_FOUR.includes(cleanText(t))) && p.teams.length >= 2
         );
@@ -94,15 +96,12 @@ function startRound(roomCode) {
             ? big4Players[Math.floor(Math.random() * big4Players.length)]
             : activeDB[Math.floor(Math.random() * activeDB.length)];
 
-        // Oyuncunun 4 Büyükler takımlarını bul
         const playerBig4Teams = randomPlayer.teams.filter(t => BIG_FOUR.includes(cleanText(t)));
         const chosenBig4 = playerBig4Teams[Math.floor(Math.random() * playerBig4Teams.length)];
         
-        // Diğer takımlarından birini seç
         const otherTeams = randomPlayer.teams.filter(t => cleanText(t) !== cleanText(chosenBig4));
         const chosenOther = otherTeams[Math.floor(Math.random() * otherTeams.length)];
 
-        // Kutu sırasını rastgele yap (Sürekli sol tarafta 4 Büyükler olmasın diye)
         if (Math.random() > 0.5) {
             room.currentTeamA = chosenBig4;
             room.currentTeamB = chosenOther;
@@ -143,14 +142,15 @@ io.on('connection', (socket) => {
 
     socket.on('createSinglePlayer', ({ playerName, gameMode, playStyle }) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = { isSinglePlayer: true, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0 };
+        // YENİ: Odaya isGameOver: false bayrağı eklendi
+        rooms[roomCode] = { isSinglePlayer: true, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, isGameOver: false };
         socket.join(roomCode); socket.emit('gameReadySP', { p1: playerName, roomCode });
         nextTurn(roomCode);
     });
 
     socket.on('createRoom', ({ playerName, gameMode, playStyle }) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = { isSinglePlayer: false, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, roundTimer: null };
+        rooms[roomCode] = { isSinglePlayer: false, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, roundTimer: null, isGameOver: false };
         socket.join(roomCode); socket.emit('roomCreated', roomCode); 
     });
 
@@ -179,6 +179,8 @@ io.on('connection', (socket) => {
 
     function validateAndStart(roomCode) {
         const room = rooms[roomCode];
+        if (room.isGameOver) return; // Kontrol eklendi
+
         let cleanA = cleanText(room.customTeamA.trim()); let cleanB = cleanText(room.customTeamB.trim());
 
         if (cleanA === "" && cleanB === "") { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Takım alanları boş olamaz!"); return; }
@@ -250,8 +252,10 @@ io.on('connection', (socket) => {
                 io.to(roomCode).emit('roundWon', { winnerName: "DOĞRU!", correctPlayer: matchedPlayer.name.toUpperCase(), scores: [room.players[0].score, 0] });
                 setTimeout(() => { nextTurn(roomCode); }, 1500);
             } else {
-                if (room.players[winnerIndex].score >= WIN_SCORE) io.to(roomCode).emit('gameOver', { winnerName: room.players[winnerIndex].name, correctPlayer: matchedPlayer.name.toUpperCase(), scores: [room.players[0].score, room.players[1].score] });
-                else {
+                if (room.players[winnerIndex].score >= WIN_SCORE) {
+                    room.isGameOver = true;
+                    io.to(roomCode).emit('gameOver', { winnerName: room.players[winnerIndex].name, correctPlayer: matchedPlayer.name.toUpperCase(), scores: [room.players[0].score, room.players[1].score] });
+                } else {
                     io.to(roomCode).emit('roundWon', { winnerName: room.players[winnerIndex].name, correctPlayer: matchedPlayer.name.toUpperCase(), scores: [room.players[0].score, room.players[1].score] });
                     setTimeout(() => { nextTurn(roomCode); }, 4000);
                 }
@@ -271,12 +275,18 @@ io.on('connection', (socket) => {
 
     socket.on('spTimeUp', (roomCode) => {
         const room = rooms[roomCode];
-        if (room && room.isSinglePlayer) { room.roundActive = false; updateLeaderboard(room.players[0].name, room.players[0].score); io.to(roomCode).emit('gameOver', { winnerName: "SÜRE BİTTİ!", correctPlayer: "Skorun: " + room.players[0].score, scores: [room.players[0].score, 0] }); }
+        if (room && room.isSinglePlayer) { 
+            room.roundActive = false; 
+            room.isGameOver = true; // YENİ: Süre bittiğinde kilidi aktif et
+            updateLeaderboard(room.players[0].name, room.players[0].score); 
+            io.to(roomCode).emit('gameOver', { winnerName: "SÜRE BİTTİ!", correctPlayer: "Skorun: " + room.players[0].score, scores: [room.players[0].score, 0] }); 
+        }
     });
 
     socket.on('playAgain', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
+            room.isGameOver = false; // YENİ: Yeni oyun başladığında kilidi aç
             if (room.isSinglePlayer && room.players[0].score > 0) updateLeaderboard(room.players[0].name, room.players[0].score);
             room.players[0].score = 0; if(room.players[1]) room.players[1].score = 0; clearTimeout(room.roundTimer);
             io.to(roomCode).emit('playAgainReady'); nextTurn(roomCode); 
