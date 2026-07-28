@@ -60,7 +60,7 @@ let myRoomCode = ""; let isRoundActive = false; let countdownInterval;
 let isSinglePlayerMode = false; let isFirstRoundSP = true; let spTimerLeft = 120; let spGlobalInterval;
 let pendingTarget = ""; let myPlayerIndex = 0; 
 let selectedPlayStyle = ""; 
-let roundStartInterval; // YENİ: Başlangıç sayacını tutan sızıntı önleyici değişken
+let roundStartInterval; 
 
 function showPlayStyleSelection(target) { 
     pendingTarget = target; 
@@ -125,7 +125,7 @@ socket.on('gameReady', (players) => {
 
 socket.on('gameReadySP', (data) => {
     isFirstRoundSP = true; 
-    isSinglePlayerMode = true; // DÜZELTME: Oyunun başlarken tek oyuncu modunda olduğunu kesinleştirir
+    isSinglePlayerMode = true;
     myRoomCode = data.roomCode;
     document.getElementById('p1-name').innerText = data.p1;
     document.getElementById('p2-score-container').style.display = 'none'; 
@@ -213,7 +213,7 @@ socket.on('newRound', (teams) => {
     teamSelectionArea.style.display = 'none'; matchTeamsContainer.style.display = 'flex'; actionArea.style.display = 'none';
     if (!isSinglePlayerMode) { timerDisplay.style.display = 'none'; clearInterval(countdownInterval); }
     
-    clearInterval(roundStartInterval); // DÜZELTME: Eski geri sayımı temizler (Sızıntıyı Önler)
+    clearInterval(roundStartInterval); 
     
     timerDisplay.classList.remove('timer-warning'); teamABox.innerText = "?"; teamBBox.innerText = "?"; isRoundActive = false;
     passButton.disabled = false; passButton.innerText = 'Pas Geç ⏭️';
@@ -236,7 +236,7 @@ socket.on('newRound', (teams) => {
             if (isSinglePlayerMode) {
                 if (isFirstRoundSP) {
                     isFirstRoundSP = false; spTimerLeft = 120; timerDisplay.innerText = spTimerLeft;
-                    clearInterval(spGlobalInterval); // DÜZELTME: Var olan ana sayacı temizler
+                    clearInterval(spGlobalInterval); 
                     spGlobalInterval = setInterval(() => {
                         spTimerLeft--; timerDisplay.innerText = spTimerLeft;
                         if(spTimerLeft <= 10) timerDisplay.classList.add('timer-warning');
@@ -245,7 +245,7 @@ socket.on('newRound', (teams) => {
                 }
             } else {
                 let timeLeft = 30; timerDisplay.innerText = timeLeft;
-                clearInterval(countdownInterval); // DÜZELTME: Var olan tur sayacını temizler
+                clearInterval(countdownInterval); 
                 countdownInterval = setInterval(() => {
                     timeLeft--; timerDisplay.innerText = timeLeft;
                     if(timeLeft <= 10 && timeLeft > 0) timerDisplay.classList.add('timer-warning');
@@ -279,18 +279,38 @@ socket.on('roundWon', (data) => {
     statusMsg.innerText = `${data.winnerName}\nCevap: ${data.correctPlayer}`; statusMsg.style.color = "#2ecc71";
 });
 
+// YENİ: Oyun bittiğinde arka planda çalışan ve ekranı ezen tüm sayıcıları anında imha eden kilit eklendi!
 socket.on('gameOver', (data) => {
-    isRoundActive = false; clearInterval(countdownInterval); clearInterval(spGlobalInterval); actionArea.style.display = 'none'; timerDisplay.style.display = 'none'; matchTeamsContainer.style.display = 'none';
+    isRoundActive = false; 
+    clearInterval(countdownInterval); 
+    clearInterval(spGlobalInterval); 
+    clearInterval(roundStartInterval); 
+    
+    actionArea.style.display = 'none'; 
+    timerDisplay.style.display = 'none'; 
+    matchTeamsContainer.style.display = 'none';
+    
     document.getElementById('p1-score').innerText = data.scores[0];
-    if (isSinglePlayerMode) statusMsg.innerText = `SÜRE BİTTİ! ⏰\nToplam Skorun: ${data.scores[0]}`; else { document.getElementById('p2-score').innerText = data.scores[1]; statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`; }
+    if (isSinglePlayerMode) {
+        statusMsg.innerText = `SÜRE BİTTİ! ⏰\nToplam Skorun: ${data.scores[0]}`; 
+    } else { 
+        document.getElementById('p2-score').innerText = data.scores[1]; 
+        statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`; 
+    }
+    
     statusMsg.style.color = "#3498db";
+    
     var duration = 3 * 1000; var end = Date.now() + duration;
-    (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); if (Date.now() < end) requestAnimationFrame(frame); }());
+    (function frame() { 
+        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); 
+        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); 
+        if (Date.now() < end) requestAnimationFrame(frame); 
+    }());
 });
 
 socket.on('playAgainReady', () => { 
     isFirstRoundSP = true; 
-    clearInterval(roundStartInterval); // DÜZELTME: Tur başlangıç sızıntısını temizler
+    clearInterval(roundStartInterval); 
     if (isSinglePlayerMode) { clearInterval(spGlobalInterval); spTimerLeft = 120; } 
     else clearInterval(countdownInterval); 
     document.getElementById('p1-score').innerText = "0"; 
