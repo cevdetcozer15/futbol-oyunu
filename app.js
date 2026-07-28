@@ -59,7 +59,8 @@ const modeSelection = document.getElementById('mode-selection');
 let myRoomCode = ""; let isRoundActive = false; let countdownInterval;
 let isSinglePlayerMode = false; let isFirstRoundSP = true; let spTimerLeft = 120; let spGlobalInterval;
 let pendingTarget = ""; let myPlayerIndex = 0; 
-let selectedPlayStyle = ""; // YENİ: Tarzı hafızada tutar (random veya custom)
+let selectedPlayStyle = ""; 
+let roundStartInterval; // YENİ: Başlangıç sayacını tutan sızıntı önleyici değişken
 
 function showPlayStyleSelection(target) { 
     pendingTarget = target; 
@@ -87,7 +88,6 @@ document.getElementById('createRoomBtn').addEventListener('click', () => showPla
 document.getElementById('cancelStyleBtn').addEventListener('click', hidePlayStyleSelection);
 document.getElementById('backModeBtn').addEventListener('click', goBackToPlayStyleSelection);
 
-// YENİ: Her iki tarz seçimi de modları (Klasik, SuperLig vb.) açar
 document.getElementById('styleRandomBtn').addEventListener('click', () => { selectedPlayStyle = 'random'; showModeSelection(); });
 document.getElementById('styleCustomBtn').addEventListener('click', () => { selectedPlayStyle = 'custom'; showModeSelection(); });
 
@@ -97,7 +97,6 @@ document.getElementById('modeCountryBtn').addEventListener('click', () => startW
 
 function startWithMode(selectedMode) {
     const nameInput = document.getElementById('playerName').value || (pendingTarget === "single" ? "Oyuncu" : "Oyuncu 1");
-    // PlayStyle ve GameMode aynı anda gönderiliyor
     if (pendingTarget === "single") socket.emit('createSinglePlayer', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle });
     else socket.emit('createRoom', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle });
     hidePlayStyleSelection();
@@ -125,7 +124,9 @@ socket.on('gameReady', (players) => {
 });
 
 socket.on('gameReadySP', (data) => {
-    isFirstRoundSP = true; myRoomCode = data.roomCode;
+    isFirstRoundSP = true; 
+    isSinglePlayerMode = true; // DÜZELTME: Oyunun başlarken tek oyuncu modunda olduğunu kesinleştirir
+    myRoomCode = data.roomCode;
     document.getElementById('p1-name').innerText = data.p1;
     document.getElementById('p2-score-container').style.display = 'none'; 
     leaderboardContainer.style.display = 'block';
@@ -160,7 +161,6 @@ socket.on('requestTeamSelection', (data) => {
     if (recognition) { recognition.stop(); micA.classList.remove("listening"); micB.classList.remove("listening"); }
     btn.innerText = "Takımı Onayla & Hazır Ol"; btn.disabled = false;
 
-    // YENİ: Seçilen moda göre input placeholder isimleri akıllıca ayarlanır
     const isCountryMode = data.gameMode === 'country';
     const teamBName = isCountryMode ? "Ülke" : "Takım";
 
@@ -212,15 +212,18 @@ socket.on('invalidCustomTeams', (msg) => {
 socket.on('newRound', (teams) => {
     teamSelectionArea.style.display = 'none'; matchTeamsContainer.style.display = 'flex'; actionArea.style.display = 'none';
     if (!isSinglePlayerMode) { timerDisplay.style.display = 'none'; clearInterval(countdownInterval); }
+    
+    clearInterval(roundStartInterval); // DÜZELTME: Eski geri sayımı temizler (Sızıntıyı Önler)
+    
     timerDisplay.classList.remove('timer-warning'); teamABox.innerText = "?"; teamBBox.innerText = "?"; isRoundActive = false;
     passButton.disabled = false; passButton.innerText = 'Pas Geç ⏭️';
     
     let count = (isSinglePlayerMode && !isFirstRoundSP) ? 1 : 3; statusMsg.innerText = count; statusMsg.style.color = "#fff";
     
-    const interval = setInterval(() => {
+    roundStartInterval = setInterval(() => {
         count--;
         if (count > 0) { statusMsg.innerText = count; } else {
-            clearInterval(interval); statusMsg.innerText = "YAZ!"; statusMsg.style.color = "#f1c40f";
+            clearInterval(roundStartInterval); statusMsg.innerText = "YAZ!"; statusMsg.style.color = "#f1c40f";
             teamABox.innerText = teams.teamA.toUpperCase();
             if (teams.mode === 'country') {
                 let countryKey = teams.teamB.toLowerCase().trim(); let countryCode = countryFlags[countryKey];
@@ -229,9 +232,11 @@ socket.on('newRound', (teams) => {
             } else teamBBox.innerText = teams.teamB.toUpperCase();
 
             actionArea.style.display = 'flex'; answerInput.value = ""; answerInput.focus(); isRoundActive = true; timerDisplay.style.display = 'flex';
+            
             if (isSinglePlayerMode) {
                 if (isFirstRoundSP) {
                     isFirstRoundSP = false; spTimerLeft = 120; timerDisplay.innerText = spTimerLeft;
+                    clearInterval(spGlobalInterval); // DÜZELTME: Var olan ana sayacı temizler
                     spGlobalInterval = setInterval(() => {
                         spTimerLeft--; timerDisplay.innerText = spTimerLeft;
                         if(spTimerLeft <= 10) timerDisplay.classList.add('timer-warning');
@@ -240,6 +245,7 @@ socket.on('newRound', (teams) => {
                 }
             } else {
                 let timeLeft = 30; timerDisplay.innerText = timeLeft;
+                clearInterval(countdownInterval); // DÜZELTME: Var olan tur sayacını temizler
                 countdownInterval = setInterval(() => {
                     timeLeft--; timerDisplay.innerText = timeLeft;
                     if(timeLeft <= 10 && timeLeft > 0) timerDisplay.classList.add('timer-warning');
@@ -282,6 +288,13 @@ socket.on('gameOver', (data) => {
     (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); if (Date.now() < end) requestAnimationFrame(frame); }());
 });
 
-socket.on('playAgainReady', () => { isFirstRoundSP = true; if (isSinglePlayerMode) { clearInterval(spGlobalInterval); spTimerLeft = 120; } else clearInterval(countdownInterval); document.getElementById('p1-score').innerText = "0"; document.getElementById('p2-score').innerText = "0"; });
+socket.on('playAgainReady', () => { 
+    isFirstRoundSP = true; 
+    clearInterval(roundStartInterval); // DÜZELTME: Tur başlangıç sızıntısını temizler
+    if (isSinglePlayerMode) { clearInterval(spGlobalInterval); spTimerLeft = 120; } 
+    else clearInterval(countdownInterval); 
+    document.getElementById('p1-score').innerText = "0"; 
+    document.getElementById('p2-score').innerText = "0"; 
+});
 
 document.getElementById('exit-btn').addEventListener('click', () => { window.location.reload(); }); document.getElementById('waiting-exit-btn').addEventListener('click', () => { window.location.reload(); }); document.getElementById('new-game-btn').addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
