@@ -9,8 +9,16 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
-const dbClassic = require('./futbolcular.json');
-const dbSuperLig = require('./superlig.json'); 
+// YENİ: Veritabanını anlık okuyan fonksiyon (Cache sorununu çözer!)
+function getDB(mode) {
+    try {
+        const fileName = mode === 'superlig' ? './superlig.json' : './futbolcular.json';
+        return JSON.parse(fs.readFileSync(fileName, 'utf8'));
+    } catch (err) {
+        console.log("JSON okuma hatası:", err);
+        return [];
+    }
+}
 
 let topScores = [];
 const LEADERBOARD_FILE = './leaderboard.json';
@@ -83,7 +91,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // YENİ: Oyuncular sadece kendi kutularını doldurup gönderirler
     socket.on('submitCustomTeam', ({ roomCode, teamA, teamB }) => {
         const room = rooms[roomCode];
         if(!room) return;
@@ -107,7 +114,6 @@ io.on('connection', (socket) => {
 
         io.to(roomCode).emit('teamLockedMsg', playerIndex);
 
-        // İki oyuncu da okeye bastıysa veya tek oyuncuysa kontrol et
         if (room.isSinglePlayer || (room.teamAReady && room.teamBReady)) {
             validateAndStart(roomCode);
         }
@@ -128,9 +134,9 @@ io.on('connection', (socket) => {
             io.to(roomCode).emit('invalidCustomTeams', "Her iki oyuncu da kendi takımını yazmak zorunda!"); return;
         }
 
-        const activeDB = room.gameMode === 'superlig' ? dbSuperLig : dbClassic;
+        // Değişiklik: Veritabanı artık dinamik çağrılıyor
+        const activeDB = getDB(room.gameMode);
 
-        // Tek oyunculu modda 2. takımı sistem bulur
         if (cleanB === "" && room.isSinglePlayer) {
             const possiblePlayers = activeDB.filter(p => p.teams.some(t => cleanText(t).includes(cleanA)));
             if (possiblePlayers.length === 0) {
@@ -193,7 +199,9 @@ io.on('connection', (socket) => {
         if (!room || !room.roundActive) return;
 
         const cleanedAnswer = cleanText(answer.trim());
-        const activeDB = room.gameMode === 'superlig' ? dbSuperLig : dbClassic;
+        
+        // Değişiklik: Veritabanı kontrol için dinamik çağrılıyor
+        const activeDB = getDB(room.gameMode);
 
         const matchedPlayer = activeDB.find(p => {
             const cleanPlayerName = cleanText(p.name);
