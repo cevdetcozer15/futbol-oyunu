@@ -31,17 +31,20 @@
             </div>
         </div>
 
-        <div id="mode-selection" style="display: none;" class="mode-container">
-            <h3>Oyun Modunu Seç</h3>
-            <button id="modeTeamsBtn" class="mode-btn">⚔️ Takım - Takım</button>
-            <button id="modeCountryBtn" class="mode-btn">🌍 Takım - Ülke</button>
-            <button id="cancelModeBtn" class="cancel-btn" style="margin-top: 10px;">❌ İptal</button>
+        <!-- 1. AŞAMA: OYUN TARZI SEÇİMİ -->
+        <div id="play-style-selection" style="display: none;" class="mode-container">
+            <h3>Oyun Tarzını Seç</h3>
+            <button id="styleRandomBtn" class="mode-btn">🎲 Rastgele (Sistem Seçer)</button>
+            <button id="styleCustomBtn" class="mode-btn" style="background-color: #9b59b6;">🎤 Kendi Arenanı Yarat</button>
+            <button id="cancelStyleBtn" class="cancel-btn" style="margin-top: 10px;">❌ İptal</button>
         </div>
 
-        <div id="sub-mode-selection" style="display: none;" class="mode-container">
-            <h3>Lig Seçimi</h3>
-            <button id="modeNormalBtn" class="mode-btn">🌍 Normal Oyun (Klasik)</button>
+        <!-- 2. AŞAMA: RASTGELE İÇİN ALT MODLAR -->
+        <div id="mode-selection" style="display: none;" class="mode-container">
+            <h3>Oyun Modunu Seç</h3>
+            <button id="modeTeamsBtn" class="mode-btn">🌍 Normal Oyun (Klasik)</button>
             <button id="modeSuperLigBtn" class="mode-btn" style="background-color: #e74c3c;">🇹🇷 Süper Lig Modu</button>
+            <button id="modeCountryBtn" class="mode-btn" style="background-color: #3498db;">🗺️ Takım - Ülke</button>
             <button id="backModeBtn" class="cancel-btn" style="margin-top: 10px;">⬅️ Geri</button>
         </div>
 
@@ -71,21 +74,21 @@
 
         <div id="status-message">Hazır olun...</div>
 
-        <!-- YENİ: Takım Belirleme Alanı (Mikrofonlu) -->
+        <!-- Takım Belirleme Alanı (Custom Mod için) -->
         <div id="team-selection-area" class="custom-team-box" style="display: none;">
             <h3 style="color: #f1c40f; margin-bottom: 5px;">Kendi Arenanı Yarat</h3>
             <p style="font-size: 12px; margin-bottom: 15px;">Takımları yaz veya mikrofonla söyle!</p>
             
             <div class="input-group">
-                <input type="text" id="custom-team-a" placeholder="1. Takım (Örn: Galatasaray)">
+                <input type="text" id="custom-team-a" placeholder="1. Takım (Sen Seç)">
                 <button class="mic-btn" id="mic-a" title="Sesli Söyle">🎤</button>
             </div>
             <div class="input-group">
-                <input type="text" id="custom-team-b" placeholder="2. Takım (Tekli modda boş bırakabilirsin)">
+                <input type="text" id="custom-team-b" placeholder="2. Takım">
                 <button class="mic-btn" id="mic-b" title="Sesli Söyle">🎤</button>
             </div>
             
-            <button id="confirm-teams-btn" class="mode-btn" style="background-color: #2ecc71; margin-top: 10px; width: 100%;">Takımları Onayla & Maça Başla</button>
+            <button id="confirm-teams-btn" class="mode-btn" style="background-color: #2ecc71; margin-top: 10px; width: 100%;">Takımı Onayla & Hazır Ol</button>
             <div id="custom-team-error" style="color: #e74c3c; margin-top: 10px; font-weight: bold;"></div>
         </div>
 
@@ -110,6 +113,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=16"></script>
 </body>
 </html>
