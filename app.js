@@ -58,7 +58,8 @@ const modeSelection = document.getElementById('mode-selection');
 
 let myRoomCode = ""; let isRoundActive = false; let countdownInterval;
 let isSinglePlayerMode = false; let isFirstRoundSP = true; let spTimerLeft = 120; let spGlobalInterval;
-let pendingTarget = ""; let myPlayerIndex = 0;
+let pendingTarget = ""; let myPlayerIndex = 0; 
+let selectedPlayStyle = ""; // YENİ: Tarzı hafızada tutar (random veya custom)
 
 function showPlayStyleSelection(target) { 
     pendingTarget = target; 
@@ -85,16 +86,20 @@ document.getElementById('singlePlayerBtn').addEventListener('click', () => showP
 document.getElementById('createRoomBtn').addEventListener('click', () => showPlayStyleSelection("multi"));
 document.getElementById('cancelStyleBtn').addEventListener('click', hidePlayStyleSelection);
 document.getElementById('backModeBtn').addEventListener('click', goBackToPlayStyleSelection);
-document.getElementById('styleRandomBtn').addEventListener('click', showModeSelection);
-document.getElementById('styleCustomBtn').addEventListener('click', () => startWithMode('custom'));
+
+// YENİ: Her iki tarz seçimi de modları (Klasik, SuperLig vb.) açar
+document.getElementById('styleRandomBtn').addEventListener('click', () => { selectedPlayStyle = 'random'; showModeSelection(); });
+document.getElementById('styleCustomBtn').addEventListener('click', () => { selectedPlayStyle = 'custom'; showModeSelection(); });
+
 document.getElementById('modeTeamsBtn').addEventListener('click', () => startWithMode('teams'));
 document.getElementById('modeSuperLigBtn').addEventListener('click', () => startWithMode('superlig'));
 document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
 
 function startWithMode(selectedMode) {
     const nameInput = document.getElementById('playerName').value || (pendingTarget === "single" ? "Oyuncu" : "Oyuncu 1");
-    if (pendingTarget === "single") socket.emit('createSinglePlayer', { playerName: nameInput, gameMode: selectedMode });
-    else socket.emit('createRoom', { playerName: nameInput, gameMode: selectedMode });
+    // PlayStyle ve GameMode aynı anda gönderiliyor
+    if (pendingTarget === "single") socket.emit('createSinglePlayer', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle });
+    else socket.emit('createRoom', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle });
     hidePlayStyleSelection();
 }
 
@@ -133,32 +138,21 @@ socket.on('updateLeaderboard', (topScores) => {
     topScores.forEach((item, index) => { leaderboardList.innerHTML += `<li><span>${index + 1}. ${item.name}</span> <span>${item.score} P</span></li>`; });
 });
 
-// ARAYÜZ YÖNETİMİ
 socket.on('requestTeamSelection', (data) => {
     myPlayerIndex = data.playerIndex; 
     isSinglePlayerMode = data.isSinglePlayer;
 
-    statusMsg.innerText = ""; 
-    matchTeamsContainer.style.display = 'none'; 
-    actionArea.style.display = 'none'; 
-    timerDisplay.style.display = 'none'; 
-    teamSelectionArea.style.display = 'block'; 
-    customTeamError.innerText = "";
+    statusMsg.innerText = ""; matchTeamsContainer.style.display = 'none'; actionArea.style.display = 'none'; timerDisplay.style.display = 'none'; teamSelectionArea.style.display = 'block'; customTeamError.innerText = "";
     
     const inputA = document.getElementById('custom-team-a'); 
     const inputB = document.getElementById('custom-team-b');
     const micA = document.getElementById('mic-a'); 
     const micB = document.getElementById('mic-b');
-    
-    // Kırılmaz yapı: ID yoksa bile parent element'i (yani div'i) bulur
     const groupA = document.getElementById('team-a-group') || inputA.parentElement;
     const groupB = document.getElementById('team-b-group') || inputB.parentElement;
     const btn = document.getElementById('confirm-teams-btn');
 
-    inputA.value = ""; inputB.value = ""; 
-    inputA.disabled = false; inputB.disabled = false;
-    
-    // Her ihtimale karşı başta her şeyi görünür yapıyoruz
+    inputA.value = ""; inputB.value = ""; inputA.disabled = false; inputB.disabled = false;
     if (groupA) groupA.style.display = "flex";
     if (groupB) groupB.style.display = "flex";
     micA.style.display = "flex"; micB.style.display = "flex";
@@ -166,19 +160,21 @@ socket.on('requestTeamSelection', (data) => {
     if (recognition) { recognition.stop(); micA.classList.remove("listening"); micB.classList.remove("listening"); }
     btn.innerText = "Takımı Onayla & Hazır Ol"; btn.disabled = false;
 
+    // YENİ: Seçilen moda göre input placeholder isimleri akıllıca ayarlanır
+    const isCountryMode = data.gameMode === 'country';
+    const teamBName = isCountryMode ? "Ülke" : "Takım";
+
     if (isSinglePlayerMode) {
-        // TEKLİ OYUNCU: Sadece 1. Kutu görünür
         inputA.placeholder = "Takımını Seç (Örn: Galatasaray)"; 
-        if (groupB) groupB.style.display = "none"; // 2. Kutu ve mikrofonu tamamen yok eder
+        if (groupB) groupB.style.display = "none"; 
     } else {
-        // ÇOKLU OYUNCU: Kilitli/Açık Mantığı
         if (myPlayerIndex === 0) { 
             inputA.placeholder = "1. Takım (Sen Seç)"; 
-            inputB.placeholder = "2. Takım (Rakip Seçiyor 🔒)"; 
+            inputB.placeholder = `2. ${teamBName} (Rakip Seçiyor 🔒)`; 
             inputB.disabled = true; micB.style.display = "none"; 
         } else { 
             inputA.placeholder = "1. Takım (Rakip Seçiyor 🔒)"; 
-            inputB.placeholder = "2. Takım (Sen Seç)"; 
+            inputB.placeholder = `2. ${teamBName} (Sen Seç)`; 
             inputA.disabled = true; micA.style.display = "none"; 
         }
     }
@@ -205,10 +201,8 @@ socket.on('teamLockedMsg', (lockedPlayerIndex) => {
 
 socket.on('invalidCustomTeams', (msg) => {
     customTeamError.innerText = msg; document.getElementById('confirm-teams-btn').innerText = "Tekrar Dene"; document.getElementById('confirm-teams-btn').disabled = false;
-    
     if (isSinglePlayerMode) { 
-        document.getElementById('custom-team-a').disabled = false; 
-        document.getElementById('mic-a').style.display = "flex"; 
+        document.getElementById('custom-team-a').disabled = false; document.getElementById('mic-a').style.display = "flex"; 
     } else { 
         if (myPlayerIndex === 0) { document.getElementById('custom-team-a').disabled = false; document.getElementById('mic-a').style.display = "flex"; } 
         else { document.getElementById('custom-team-b').disabled = false; document.getElementById('mic-b').style.display = "flex"; } 
