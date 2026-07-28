@@ -31,7 +31,6 @@
             </div>
         </div>
 
-        <!-- 1. AŞAMA: OYUN TARZI SEÇİMİ -->
         <div id="play-style-selection" style="display: none;" class="mode-container">
             <h3>Oyun Tarzını Seç</h3>
             <button id="styleRandomBtn" class="mode-btn">🎲 Rastgele (Sistem Seçer)</button>
@@ -39,7 +38,6 @@
             <button id="cancelStyleBtn" class="cancel-btn" style="margin-top: 10px;">❌ İptal</button>
         </div>
 
-        <!-- 2. AŞAMA: RASTGELE İÇİN ALT MODLAR -->
         <div id="mode-selection" style="display: none;" class="mode-container">
             <h3>Oyun Modunu Seç</h3>
             <button id="modeTeamsBtn" class="mode-btn">🌍 Normal Oyun (Klasik)</button>
@@ -74,16 +72,16 @@
 
         <div id="status-message">Hazır olun...</div>
 
-        <!-- Takım Belirleme Alanı (Custom Mod için) -->
+        <!-- Takım Belirleme Alanı -->
         <div id="team-selection-area" class="custom-team-box" style="display: none;">
             <h3 style="color: #f1c40f; margin-bottom: 5px;">Kendi Arenanı Yarat</h3>
-            <p style="font-size: 12px; margin-bottom: 15px;">Takımları yaz veya mikrofonla söyle!</p>
+            <p style="font-size: 12px; margin-bottom: 15px;">Takımı yaz veya mikrofonla söyle!</p>
             
-            <div class="input-group">
+            <div class="input-group" id="team-a-group">
                 <input type="text" id="custom-team-a" placeholder="1. Takım (Sen Seç)">
                 <button class="mic-btn" id="mic-a" title="Sesli Söyle">🎤</button>
             </div>
-            <div class="input-group">
+            <div class="input-group" id="team-b-group">
                 <input type="text" id="custom-team-b" placeholder="2. Takım">
                 <button class="mic-btn" id="mic-b" title="Sesli Söyle">🎤</button>
             </div>
@@ -113,6 +111,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js?v=16"></script>
+    <script src="app.js?v=18"></script>
 </body>
 </html>
