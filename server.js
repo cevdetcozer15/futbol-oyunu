@@ -12,14 +12,7 @@ app.use(express.static(__dirname));
 function getDB(mode) {
     try {
         if (mode === 'superlig') return JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
-        const classic = JSON.parse(fs.readFileSync('./futbolcular.json', 'utf8'));
-        if (mode === 'custom') {
-            try {
-                const superlig = JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
-                return [...classic, ...superlig]; // Custom modda her iki listeyi de tarar
-            } catch(e) { return classic; }
-        }
-        return classic;
+        return JSON.parse(fs.readFileSync('./futbolcular.json', 'utf8'));
     } catch (err) { return []; }
 }
 
@@ -47,18 +40,22 @@ function generateRoomCode() { return Math.floor(1000 + Math.random() * 9000).toS
 function triggerTeamSelection(roomCode) {
     const room = rooms[roomCode]; if(!room) return;
     room.customTeamA = ""; room.customTeamB = ""; room.teamAReady = false; room.teamBReady = false;
-    room.players.forEach((p, index) => { io.to(p.id).emit('requestTeamSelection', { isSinglePlayer: room.isSinglePlayer, playerIndex: index }); });
+    room.players.forEach((p, index) => { 
+        io.to(p.id).emit('requestTeamSelection', { 
+            isSinglePlayer: room.isSinglePlayer, 
+            playerIndex: index,
+            gameMode: room.gameMode // YENİ: Client'a hangi mod olduğunu bildirir
+        }); 
+    });
 }
 
-// YENİ: Oyunun rastgele mi yoksa manuel mi devam edeceğine karar veren fonksiyon
 function nextTurn(roomCode) {
     const room = rooms[roomCode];
     if(!room) return;
-    if(room.gameMode === 'custom') triggerTeamSelection(roomCode);
+    if(room.playStyle === 'custom') triggerTeamSelection(roomCode);
     else startRound(roomCode);
 }
 
-// Rastgele oyunlar için sistemi başlatan fonksiyon
 function startRound(roomCode) {
     const room = rooms[roomCode]; if (!room) return;
     room.passVotes = 0; clearTimeout(room.roundTimer); 
@@ -92,16 +89,16 @@ function startRound(roomCode) {
 io.on('connection', (socket) => {
     socket.emit('updateLeaderboard', topScores);
 
-    socket.on('createSinglePlayer', ({ playerName, gameMode }) => {
+    socket.on('createSinglePlayer', ({ playerName, gameMode, playStyle }) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = { isSinglePlayer: true, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0 };
+        rooms[roomCode] = { isSinglePlayer: true, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0 };
         socket.join(roomCode); socket.emit('gameReadySP', { p1: playerName, roomCode });
         nextTurn(roomCode);
     });
 
-    socket.on('createRoom', ({ playerName, gameMode }) => {
+    socket.on('createRoom', ({ playerName, gameMode, playStyle }) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = { isSinglePlayer: false, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, roundTimer: null };
+        rooms[roomCode] = { isSinglePlayer: false, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, roundTimer: null };
         socket.join(roomCode); socket.emit('roomCreated', roomCode); 
     });
 
@@ -133,7 +130,7 @@ io.on('connection', (socket) => {
         let cleanA = cleanText(room.customTeamA.trim()); let cleanB = cleanText(room.customTeamB.trim());
 
         if (cleanA === "" && cleanB === "") { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Takım alanları boş olamaz!"); return; }
-        if (!room.isSinglePlayer && (cleanA === "" || cleanB === "")) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Her iki oyuncu da kendi takımını yazmak zorunda!"); return; }
+        if (!room.isSinglePlayer && (cleanA === "" || cleanB === "")) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Her iki oyuncu da kendi alanını yazmak zorunda!"); return; }
 
         const activeDB = getDB(room.gameMode);
 
@@ -141,21 +138,31 @@ io.on('connection', (socket) => {
             const possiblePlayers = activeDB.filter(p => p.teams.some(t => cleanText(t).includes(cleanA)));
             if (possiblePlayers.length === 0) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Veritabanında bu takımda oynamış kimse yok!"); return; }
             const randomPlayer = possiblePlayers[Math.floor(Math.random() * possiblePlayers.length)];
-            const otherTeams = randomPlayer.teams.filter(t => !cleanText(t).includes(cleanA));
-            if (otherTeams.length === 0) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Bu adamın başka takımı yok!"); return; }
             
-            cleanB = otherTeams[Math.floor(Math.random() * otherTeams.length)];
+            // YENİ: Tek oyuncuda mod "Takım-Ülke" ise, sistem karşına rakip ÜLKE getirir
+            if (room.gameMode === 'country') {
+                cleanB = randomPlayer.country;
+            } else {
+                const otherTeams = randomPlayer.teams.filter(t => !cleanText(t).includes(cleanA));
+                if (otherTeams.length === 0) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Bu adamın başka takımı yok!"); return; }
+                cleanB = otherTeams[Math.floor(Math.random() * otherTeams.length)];
+            }
+            
             room.currentTeamA = room.customTeamA; room.currentTeamB = cleanB; room.correctAnswer = randomPlayer.name.toUpperCase();
             startValidatedRound(roomCode); return;
         }
 
-        const matchedPlayers = activeDB.filter(p => p.teams.some(t => cleanText(t).includes(cleanA)) && p.teams.some(t => cleanText(t).includes(cleanB)));
+        const matchedPlayers = activeDB.filter(p => 
+            p.teams.some(t => cleanText(t).includes(cleanA)) && 
+            (room.gameMode === 'country' ? cleanText(p.country).includes(cleanB) : p.teams.some(t => cleanText(t).includes(cleanB)))
+        );
+
         if (matchedPlayers.length > 0) {
             const randomPlayer = matchedPlayers[Math.floor(Math.random() * matchedPlayers.length)];
             room.currentTeamA = room.customTeamA; room.currentTeamB = room.customTeamB; room.correctAnswer = randomPlayer.name.toUpperCase();
             startValidatedRound(roomCode);
         } else {
-            room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Bu iki takımda ortak oynamış bir efsane yok! Başka takımlar deneyin.");
+            room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Bu iki takımda/ülkede oynamış ortak biri yok! Başka deneyin.");
         }
     }
 
