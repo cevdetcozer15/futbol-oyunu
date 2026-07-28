@@ -60,7 +60,6 @@ let myRoomCode = ""; let isRoundActive = false; let countdownInterval;
 let isSinglePlayerMode = false; let isFirstRoundSP = true; let spTimerLeft = 120; let spGlobalInterval;
 let pendingTarget = ""; let myPlayerIndex = 0;
 
-// MENÜ GEÇİŞLERİ
 function showPlayStyleSelection(target) { 
     pendingTarget = target; 
     document.querySelector('.lobby-actions').style.display = 'none'; 
@@ -84,13 +83,10 @@ function goBackToPlayStyleSelection() {
 
 document.getElementById('singlePlayerBtn').addEventListener('click', () => showPlayStyleSelection("single"));
 document.getElementById('createRoomBtn').addEventListener('click', () => showPlayStyleSelection("multi"));
-
 document.getElementById('cancelStyleBtn').addEventListener('click', hidePlayStyleSelection);
 document.getElementById('backModeBtn').addEventListener('click', goBackToPlayStyleSelection);
-
 document.getElementById('styleRandomBtn').addEventListener('click', showModeSelection);
 document.getElementById('styleCustomBtn').addEventListener('click', () => startWithMode('custom'));
-
 document.getElementById('modeTeamsBtn').addEventListener('click', () => startWithMode('teams'));
 document.getElementById('modeSuperLigBtn').addEventListener('click', () => startWithMode('superlig'));
 document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
@@ -137,29 +133,45 @@ socket.on('updateLeaderboard', (topScores) => {
     topScores.forEach((item, index) => { leaderboardList.innerHTML += `<li><span>${index + 1}. ${item.name}</span> <span>${item.score} P</span></li>`; });
 });
 
+// ARAYÜZ YÖNETİMİ
 socket.on('requestTeamSelection', (data) => {
-    myPlayerIndex = data.playerIndex; isSinglePlayerMode = data.isSinglePlayer;
-    statusMsg.innerText = ""; matchTeamsContainer.style.display = 'none'; actionArea.style.display = 'none'; timerDisplay.style.display = 'none'; teamSelectionArea.style.display = 'block'; customTeamError.innerText = "";
+    myPlayerIndex = data.playerIndex; 
+    isSinglePlayerMode = data.isSinglePlayer;
+
+    statusMsg.innerText = ""; 
+    matchTeamsContainer.style.display = 'none'; 
+    actionArea.style.display = 'none'; 
+    timerDisplay.style.display = 'none'; 
+    teamSelectionArea.style.display = 'block'; 
+    customTeamError.innerText = "";
     
     const inputA = document.getElementById('custom-team-a'); 
     const inputB = document.getElementById('custom-team-b');
     const micA = document.getElementById('mic-a'); 
     const micB = document.getElementById('mic-b');
-    const groupB = document.getElementById('team-b-group'); // 2. Kutuyu temsil eden Div
+    
+    // Kırılmaz yapı: ID yoksa bile parent element'i (yani div'i) bulur
+    const groupA = document.getElementById('team-a-group') || inputA.parentElement;
+    const groupB = document.getElementById('team-b-group') || inputB.parentElement;
     const btn = document.getElementById('confirm-teams-btn');
 
-    inputA.value = ""; inputB.value = ""; inputA.disabled = false; inputB.disabled = false;
+    inputA.value = ""; inputB.value = ""; 
+    inputA.disabled = false; inputB.disabled = false;
+    
+    // Her ihtimale karşı başta her şeyi görünür yapıyoruz
+    if (groupA) groupA.style.display = "flex";
+    if (groupB) groupB.style.display = "flex";
     micA.style.display = "flex"; micB.style.display = "flex";
-    groupB.style.display = "flex"; // Başlangıçta görünür yapıyoruz
     
     if (recognition) { recognition.stop(); micA.classList.remove("listening"); micB.classList.remove("listening"); }
     btn.innerText = "Takımı Onayla & Hazır Ol"; btn.disabled = false;
 
-    // YENİ: Tek oyuncu modunda ikinci kutuyu tamamen gizle
     if (isSinglePlayerMode) {
+        // TEKLİ OYUNCU: Sadece 1. Kutu görünür
         inputA.placeholder = "Takımını Seç (Örn: Galatasaray)"; 
-        groupB.style.display = "none"; // 2. Kutuyu yok ettik
+        if (groupB) groupB.style.display = "none"; // 2. Kutu ve mikrofonu tamamen yok eder
     } else {
+        // ÇOKLU OYUNCU: Kilitli/Açık Mantığı
         if (myPlayerIndex === 0) { 
             inputA.placeholder = "1. Takım (Sen Seç)"; 
             inputB.placeholder = "2. Takım (Rakip Seçiyor 🔒)"; 
