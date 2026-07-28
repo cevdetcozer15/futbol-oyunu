@@ -1,6 +1,6 @@
 const socket = io();
 
-// --- SES TANIMA (WEB SPEECH API) ---
+// --- SES TANIMA ---
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
@@ -11,21 +11,14 @@ if (recognition) {
 }
 
 function listenForTeam(inputId, micBtnId) {
-    if (!recognition) {
-        alert("Tarayıcın sesli komutu desteklemiyor. Lütfen Chrome, Safari veya Edge kullan.");
-        return;
-    }
+    if (!recognition) { alert("Tarayıcın sesli komutu desteklemiyor."); return; }
     const inputField = document.getElementById(inputId);
     const micBtn = document.getElementById(micBtnId);
 
-    // YENİ: Eğer mikrofon zaten açıksa, tıklandığında kapansın
     if (micBtn.classList.contains("listening")) {
         recognition.stop();
         micBtn.classList.remove("listening");
-        inputField.placeholder = "1. Takım (Sen Seç)"; 
-        if (inputId === 'custom-team-b') {
-            inputField.placeholder = isSinglePlayerMode ? "2. Takım (Boş Bırakabilirsin)" : "2. Takım (Sen Seç)";
-        }
+        inputField.placeholder = "İptal edildi."; 
         return;
     }
     
@@ -34,14 +27,10 @@ function listenForTeam(inputId, micBtnId) {
     recognition.start();
     
     recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        inputField.value = transcript.toLowerCase().replace('.', '');
+        inputField.value = event.results[0][0].transcript.toLowerCase().replace('.', '');
         micBtn.classList.remove("listening");
     };
-    recognition.onerror = (event) => {
-        inputField.placeholder = "Anlaşılamadı, tekrar yaz/söyle.";
-        micBtn.classList.remove("listening");
-    };
+    recognition.onerror = () => { inputField.placeholder = "Anlaşılamadı."; micBtn.classList.remove("listening"); };
     recognition.onspeechend = () => { micBtn.classList.remove("listening"); }
 }
 
@@ -64,40 +53,53 @@ const leaderboardList = document.getElementById('leaderboard-list');
 const teamSelectionArea = document.getElementById('team-selection-area');
 const matchTeamsContainer = document.getElementById('match-teams-container');
 const customTeamError = document.getElementById('custom-team-error');
+const playStyleSelection = document.getElementById('play-style-selection');
+const modeSelection = document.getElementById('mode-selection');
 
-let myRoomCode = "";
-let isRoundActive = false;
-let countdownInterval;
-let isSinglePlayerMode = false;
-let isFirstRoundSP = true;
-let spTimerLeft = 120;
-let spGlobalInterval;
-let pendingTarget = ""; 
-let myPlayerIndex = 0;
+let myRoomCode = ""; let isRoundActive = false; let countdownInterval;
+let isSinglePlayerMode = false; let isFirstRoundSP = true; let spTimerLeft = 120; let spGlobalInterval;
+let pendingTarget = ""; let myPlayerIndex = 0;
 
-function showModeSelection(target) { pendingTarget = target; document.querySelector('.lobby-actions').style.display = 'none'; document.getElementById('sub-mode-selection').style.display = 'none'; document.getElementById('mode-selection').style.display = 'flex'; }
-function hideModeSelection() { pendingTarget = ""; document.getElementById('mode-selection').style.display = 'none'; document.getElementById('sub-mode-selection').style.display = 'none'; document.querySelector('.lobby-actions').style.display = 'flex'; }
-function showSubModeSelection() { document.getElementById('mode-selection').style.display = 'none'; document.getElementById('sub-mode-selection').style.display = 'flex'; }
-function goBackToModeSelection() { document.getElementById('sub-mode-selection').style.display = 'none'; document.getElementById('mode-selection').style.display = 'flex'; }
+// MENÜ GEÇİŞLERİ
+function showPlayStyleSelection(target) { 
+    pendingTarget = target; 
+    document.querySelector('.lobby-actions').style.display = 'none'; 
+    modeSelection.style.display = 'none'; 
+    playStyleSelection.style.display = 'flex'; 
+}
+function hidePlayStyleSelection() { 
+    pendingTarget = ""; 
+    playStyleSelection.style.display = 'none'; 
+    modeSelection.style.display = 'none'; 
+    document.querySelector('.lobby-actions').style.display = 'flex'; 
+}
+function showModeSelection() { 
+    playStyleSelection.style.display = 'none'; 
+    modeSelection.style.display = 'flex'; 
+}
+function goBackToPlayStyleSelection() { 
+    modeSelection.style.display = 'none'; 
+    playStyleSelection.style.display = 'flex'; 
+}
 
-document.getElementById('singlePlayerBtn').addEventListener('click', () => showModeSelection("single"));
-document.getElementById('createRoomBtn').addEventListener('click', () => showModeSelection("multi"));
-document.getElementById('cancelModeBtn').addEventListener('click', hideModeSelection);
-document.getElementById('backModeBtn').addEventListener('click', goBackToModeSelection);
+document.getElementById('singlePlayerBtn').addEventListener('click', () => showPlayStyleSelection("single"));
+document.getElementById('createRoomBtn').addEventListener('click', () => showPlayStyleSelection("multi"));
 
-document.getElementById('modeTeamsBtn').addEventListener('click', showSubModeSelection); 
-document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
-document.getElementById('modeNormalBtn').addEventListener('click', () => startWithMode('teams'));
+document.getElementById('cancelStyleBtn').addEventListener('click', hidePlayStyleSelection);
+document.getElementById('backModeBtn').addEventListener('click', goBackToPlayStyleSelection);
+
+document.getElementById('styleRandomBtn').addEventListener('click', showModeSelection);
+document.getElementById('styleCustomBtn').addEventListener('click', () => startWithMode('custom'));
+
+document.getElementById('modeTeamsBtn').addEventListener('click', () => startWithMode('teams'));
 document.getElementById('modeSuperLigBtn').addEventListener('click', () => startWithMode('superlig'));
+document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
 
 function startWithMode(selectedMode) {
-    const nameInput = document.getElementById('playerName').value;
-    if (pendingTarget === "single") {
-        socket.emit('createSinglePlayer', { playerName: nameInput || "Oyuncu", gameMode: selectedMode });
-    } else if (pendingTarget === "multi") {
-        socket.emit('createRoom', { playerName: nameInput || "Oyuncu 1", gameMode: selectedMode });
-    }
-    hideModeSelection();
+    const nameInput = document.getElementById('playerName').value || (pendingTarget === "single" ? "Oyuncu" : "Oyuncu 1");
+    if (pendingTarget === "single") socket.emit('createSinglePlayer', { playerName: nameInput, gameMode: selectedMode });
+    else socket.emit('createRoom', { playerName: nameInput, gameMode: selectedMode });
+    hidePlayStyleSelection();
 }
 
 document.getElementById('joinRoomBtn').addEventListener('click', () => {
@@ -107,10 +109,8 @@ document.getElementById('joinRoomBtn').addEventListener('click', () => {
 });
 
 socket.on('roomCreated', (code) => {
-    myRoomCode = code;
-    document.getElementById('displayRoomCode').innerText = code;
-    screens.lobby.classList.remove('active');
-    screens.waiting.classList.add('active');
+    myRoomCode = code; document.getElementById('displayRoomCode').innerText = code;
+    screens.lobby.classList.remove('active'); screens.waiting.classList.add('active');
 });
 
 socket.on('errorMsg', (msg) => { document.getElementById('lobby-message').innerText = msg; });
@@ -120,20 +120,15 @@ socket.on('gameReady', (players) => {
     document.getElementById('p2-name').innerText = players.p2;
     document.getElementById('p2-score-container').style.display = 'block';
     leaderboardContainer.style.display = 'none';
-    screens.lobby.classList.remove('active');
-    screens.waiting.classList.remove('active');
-    screens.game.classList.add('active');
+    screens.lobby.classList.remove('active'); screens.waiting.classList.remove('active'); screens.game.classList.add('active');
 });
 
 socket.on('gameReadySP', (data) => {
-    isFirstRoundSP = true;
-    myRoomCode = data.roomCode;
+    isFirstRoundSP = true; myRoomCode = data.roomCode;
     document.getElementById('p1-name').innerText = data.p1;
     document.getElementById('p2-score-container').style.display = 'none'; 
     leaderboardContainer.style.display = 'block';
-    screens.lobby.classList.remove('active');
-    screens.waiting.classList.remove('active');
-    screens.game.classList.add('active');
+    screens.lobby.classList.remove('active'); screens.waiting.classList.remove('active'); screens.game.classList.add('active');
 });
 
 socket.on('updateLeaderboard', (topScores) => {
@@ -143,144 +138,70 @@ socket.on('updateLeaderboard', (topScores) => {
 });
 
 socket.on('requestTeamSelection', (data) => {
-    myPlayerIndex = data.playerIndex;
-    isSinglePlayerMode = data.isSinglePlayer;
-
-    statusMsg.innerText = "";
-    matchTeamsContainer.style.display = 'none';
-    actionArea.style.display = 'none';
-    timerDisplay.style.display = 'none';
-    teamSelectionArea.style.display = 'block';
-    customTeamError.innerText = "";
+    myPlayerIndex = data.playerIndex; isSinglePlayerMode = data.isSinglePlayer;
+    statusMsg.innerText = ""; matchTeamsContainer.style.display = 'none'; actionArea.style.display = 'none'; timerDisplay.style.display = 'none'; teamSelectionArea.style.display = 'block'; customTeamError.innerText = "";
     
-    const inputA = document.getElementById('custom-team-a');
-    const inputB = document.getElementById('custom-team-b');
-    const micA = document.getElementById('mic-a');
-    const micB = document.getElementById('mic-b');
+    const inputA = document.getElementById('custom-team-a'); const inputB = document.getElementById('custom-team-b');
+    const micA = document.getElementById('mic-a'); const micB = document.getElementById('mic-b');
     const btn = document.getElementById('confirm-teams-btn');
 
-    inputA.value = "";
-    inputB.value = "";
-    inputA.disabled = false;
-    inputB.disabled = false;
-    micA.style.display = "flex";
-    micB.style.display = "flex";
-    
-    if (recognition) {
-        recognition.stop();
-        micA.classList.remove("listening");
-        micB.classList.remove("listening");
-    }
-
-    btn.innerText = "Takımı Onayla & Hazır Ol";
-    btn.disabled = false;
+    inputA.value = ""; inputB.value = ""; inputA.disabled = false; inputB.disabled = false;
+    micA.style.display = "flex"; micB.style.display = "flex";
+    if (recognition) { recognition.stop(); micA.classList.remove("listening"); micB.classList.remove("listening"); }
+    btn.innerText = "Takımı Onayla & Hazır Ol"; btn.disabled = false;
 
     if (isSinglePlayerMode) {
-        inputA.placeholder = "1. Takım (Sen Seç)";
-        inputB.placeholder = "2. Takım (Boş Bırakabilirsin)";
+        inputA.placeholder = "1. Takım (Sen Seç)"; inputB.placeholder = "2. Takım (Boş Bırakabilirsin)";
     } else {
-        if (myPlayerIndex === 0) {
-            inputA.placeholder = "1. Takım (Sen Seç)";
-            inputB.placeholder = "2. Takım (Rakip Seçiyor 🔒)";
-            inputB.disabled = true;
-            micB.style.display = "none";
-        } else {
-            inputA.placeholder = "1. Takım (Rakip Seçiyor 🔒)";
-            inputB.placeholder = "2. Takım (Sen Seç)";
-            inputA.disabled = true;
-            micA.style.display = "none";
-        }
+        if (myPlayerIndex === 0) { inputA.placeholder = "1. Takım (Sen Seç)"; inputB.placeholder = "2. Takım (Rakip Seçiyor 🔒)"; inputB.disabled = true; micB.style.display = "none"; } 
+        else { inputA.placeholder = "1. Takım (Rakip Seçiyor 🔒)"; inputB.placeholder = "2. Takım (Sen Seç)"; inputA.disabled = true; micA.style.display = "none"; }
     }
 });
 
 document.getElementById('confirm-teams-btn').addEventListener('click', () => {
-    const teamA = document.getElementById('custom-team-a').value;
-    const teamB = document.getElementById('custom-team-b').value;
-    
-    document.getElementById('confirm-teams-btn').innerText = "Rakip Bekleniyor ⏳";
-    document.getElementById('confirm-teams-btn').disabled = true;
-    document.getElementById('custom-team-a').disabled = true;
-    document.getElementById('custom-team-b').disabled = true;
-    document.getElementById('mic-a').style.display = "none";
-    document.getElementById('mic-b').style.display = "none";
-    
+    document.getElementById('confirm-teams-btn').innerText = "Bekleniyor ⏳"; document.getElementById('confirm-teams-btn').disabled = true;
+    document.getElementById('custom-team-a').disabled = true; document.getElementById('custom-team-b').disabled = true;
+    document.getElementById('mic-a').style.display = "none"; document.getElementById('mic-b').style.display = "none";
     if (recognition) recognition.stop();
-    
-    socket.emit('submitCustomTeam', { roomCode: myRoomCode, teamA: teamA, teamB: teamB });
+    socket.emit('submitCustomTeam', { roomCode: myRoomCode, teamA: document.getElementById('custom-team-a').value, teamB: document.getElementById('custom-team-b').value });
 });
 
 socket.on('teamLockedMsg', (lockedPlayerIndex) => {
     if (!isSinglePlayerMode && lockedPlayerIndex !== myPlayerIndex) {
-        if (lockedPlayerIndex === 0) { document.getElementById('custom-team-a').placeholder = "Rakip Seçti ✔️"; } 
-        else { document.getElementById('custom-team-b').placeholder = "Rakip Seçti ✔️"; }
+        if (lockedPlayerIndex === 0) document.getElementById('custom-team-a').placeholder = "Rakip Seçti ✔️"; 
+        else document.getElementById('custom-team-b').placeholder = "Rakip Seçti ✔️";
     }
 });
 
 socket.on('invalidCustomTeams', (msg) => {
-    customTeamError.innerText = msg;
-    document.getElementById('confirm-teams-btn').innerText = "Tekrar Dene";
-    document.getElementById('confirm-teams-btn').disabled = false;
-    
-    if (isSinglePlayerMode) {
-        document.getElementById('custom-team-a').disabled = false;
-        document.getElementById('custom-team-b').disabled = false;
-        document.getElementById('mic-a').style.display = "flex";
-        document.getElementById('mic-b').style.display = "flex";
-    } else {
-        if (myPlayerIndex === 0) {
-            document.getElementById('custom-team-a').disabled = false;
-            document.getElementById('mic-a').style.display = "flex";
-        } else {
-            document.getElementById('custom-team-b').disabled = false;
-            document.getElementById('mic-b').style.display = "flex";
-        }
-    }
+    customTeamError.innerText = msg; document.getElementById('confirm-teams-btn').innerText = "Tekrar Dene"; document.getElementById('confirm-teams-btn').disabled = false;
+    if (isSinglePlayerMode) { document.getElementById('custom-team-a').disabled = false; document.getElementById('custom-team-b').disabled = false; document.getElementById('mic-a').style.display = "flex"; document.getElementById('mic-b').style.display = "flex"; } 
+    else { if (myPlayerIndex === 0) { document.getElementById('custom-team-a').disabled = false; document.getElementById('mic-a').style.display = "flex"; } else { document.getElementById('custom-team-b').disabled = false; document.getElementById('mic-b').style.display = "flex"; } }
 });
 
 socket.on('newRound', (teams) => {
-    teamSelectionArea.style.display = 'none';
-    matchTeamsContainer.style.display = 'flex';
-    actionArea.style.display = 'none';
-    
+    teamSelectionArea.style.display = 'none'; matchTeamsContainer.style.display = 'flex'; actionArea.style.display = 'none';
     if (!isSinglePlayerMode) { timerDisplay.style.display = 'none'; clearInterval(countdownInterval); }
-    timerDisplay.classList.remove('timer-warning');
+    timerDisplay.classList.remove('timer-warning'); teamABox.innerText = "?"; teamBBox.innerText = "?"; isRoundActive = false;
+    passButton.disabled = false; passButton.innerText = 'Pas Geç ⏭️';
     
-    teamABox.innerText = "?";
-    teamBBox.innerText = "?";
-    isRoundActive = false;
-    passButton.disabled = false;
-    passButton.innerText = 'Pas Geç ⏭️';
-    
-    let count = (isSinglePlayerMode && !isFirstRoundSP) ? 1 : 3;
-    statusMsg.innerText = count;
-    statusMsg.style.color = "#fff";
+    let count = (isSinglePlayerMode && !isFirstRoundSP) ? 1 : 3; statusMsg.innerText = count; statusMsg.style.color = "#fff";
     
     const interval = setInterval(() => {
         count--;
         if (count > 0) { statusMsg.innerText = count; } else {
-            clearInterval(interval);
-            statusMsg.innerText = "YAZ!";
-            statusMsg.style.color = "#f1c40f";
-            
+            clearInterval(interval); statusMsg.innerText = "YAZ!"; statusMsg.style.color = "#f1c40f";
             teamABox.innerText = teams.teamA.toUpperCase();
             if (teams.mode === 'country') {
-                let countryKey = teams.teamB.toLowerCase().trim();
-                let countryCode = countryFlags[countryKey];
-                if (countryCode) { teamBBox.innerHTML = `<img src="https://flagcdn.com/w40/${countryCode}.png" style="height: 30px; margin-right: 10px; vertical-align: middle;"> ${teams.teamB.toUpperCase()}`; } 
-                else { teamBBox.innerText = teams.teamB.toUpperCase(); }
-            } else { teamBBox.innerText = teams.teamB.toUpperCase(); }
+                let countryKey = teams.teamB.toLowerCase().trim(); let countryCode = countryFlags[countryKey];
+                if (countryCode) teamBBox.innerHTML = `<img src="https://flagcdn.com/w40/${countryCode}.png" style="height: 30px; margin-right: 10px; vertical-align: middle;"> ${teams.teamB.toUpperCase()}`; 
+                else teamBBox.innerText = teams.teamB.toUpperCase();
+            } else teamBBox.innerText = teams.teamB.toUpperCase();
 
-            actionArea.style.display = 'flex';
-            answerInput.value = "";
-            answerInput.focus();
-            isRoundActive = true;
-            timerDisplay.style.display = 'flex';
-
+            actionArea.style.display = 'flex'; answerInput.value = ""; answerInput.focus(); isRoundActive = true; timerDisplay.style.display = 'flex';
             if (isSinglePlayerMode) {
                 if (isFirstRoundSP) {
-                    isFirstRoundSP = false;
-                    spTimerLeft = 120;
-                    timerDisplay.innerText = spTimerLeft;
+                    isFirstRoundSP = false; spTimerLeft = 120; timerDisplay.innerText = spTimerLeft;
                     spGlobalInterval = setInterval(() => {
                         spTimerLeft--; timerDisplay.innerText = spTimerLeft;
                         if(spTimerLeft <= 10) timerDisplay.classList.add('timer-warning');
@@ -288,8 +209,7 @@ socket.on('newRound', (teams) => {
                     }, 1000);
                 }
             } else {
-                let timeLeft = 30;
-                timerDisplay.innerText = timeLeft;
+                let timeLeft = 30; timerDisplay.innerText = timeLeft;
                 countdownInterval = setInterval(() => {
                     timeLeft--; timerDisplay.innerText = timeLeft;
                     if(timeLeft <= 10 && timeLeft > 0) timerDisplay.classList.add('timer-warning');
@@ -300,86 +220,38 @@ socket.on('newRound', (teams) => {
     }, 1000);
 });
 
-function sendAnswer() {
-    if (!isRoundActive) return;
-    const answer = answerInput.value;
-    if (answer.trim() !== "") { socket.emit('submitAnswer', { roomCode: myRoomCode, answer: answer }); answerInput.value = ""; }
-}
-
+function sendAnswer() { if (!isRoundActive) return; const answer = answerInput.value; if (answer.trim() !== "") { socket.emit('submitAnswer', { roomCode: myRoomCode, answer: answer }); answerInput.value = ""; } }
 document.getElementById('submit-answer-btn').addEventListener('click', sendAnswer);
 answerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendAnswer(); });
-
-passButton.addEventListener('click', () => {
-    if (!isRoundActive) return; 
-    socket.emit('passVote', myRoomCode); 
-    passButton.disabled = true;
-    passButton.innerText = isSinglePlayerMode ? 'Geçiliyor...' : 'Rakip Bekleniyor... ⏳';
-});
+passButton.addEventListener('click', () => { if (!isRoundActive) return; socket.emit('passVote', myRoomCode); passButton.disabled = true; passButton.innerText = isSinglePlayerMode ? 'Geçiliyor...' : 'Rakip Bekleniyor... ⏳'; });
 
 socket.on('roundPassed', (data) => {
-    isRoundActive = false;
-    if (!isSinglePlayerMode) { clearInterval(countdownInterval); timerDisplay.style.display = 'none'; }
-    actionArea.style.display = 'none';
-    statusMsg.innerText = `PAS GEÇİLDİ ⏭️\nCevap: ${data.correctPlayer}`;
-    statusMsg.style.color = "#f39c12"; 
+    isRoundActive = false; if (!isSinglePlayerMode) { clearInterval(countdownInterval); timerDisplay.style.display = 'none'; }
+    actionArea.style.display = 'none'; statusMsg.innerText = `PAS GEÇİLDİ ⏭️\nCevap: ${data.correctPlayer}`; statusMsg.style.color = "#f39c12"; 
 });
 
-socket.on('wrongAnswer', () => {
-    answerInput.style.backgroundColor = "#e74c3c"; 
-    setTimeout(() => { answerInput.style.backgroundColor = "#fff"; }, 400);
-});
+socket.on('wrongAnswer', () => { answerInput.style.backgroundColor = "#e74c3c"; setTimeout(() => { answerInput.style.backgroundColor = "#fff"; }, 400); });
 
 socket.on('timeUp', (data) => {
-    isRoundActive = false;
-    clearInterval(countdownInterval);
-    actionArea.style.display = 'none';
-    timerDisplay.style.display = 'none';
-    statusMsg.innerText = `SÜRE BİTTİ! ⏰\n(Cevap: ${data.correctPlayer})`;
-    statusMsg.style.color = "#e74c3c";
+    isRoundActive = false; clearInterval(countdownInterval); actionArea.style.display = 'none'; timerDisplay.style.display = 'none';
+    statusMsg.innerText = `SÜRE BİTTİ! ⏰\n(Cevap: ${data.correctPlayer})`; statusMsg.style.color = "#e74c3c";
 });
 
 socket.on('roundWon', (data) => {
-    isRoundActive = false;
-    if (!isSinglePlayerMode) { clearInterval(countdownInterval); timerDisplay.style.display = 'none'; }
-    actionArea.style.display = 'none';
-    document.getElementById('p1-score').innerText = data.scores[0];
-    if (!isSinglePlayerMode) document.getElementById('p2-score').innerText = data.scores[1];
-    statusMsg.innerText = `${data.winnerName}\nCevap: ${data.correctPlayer}`;
-    statusMsg.style.color = "#2ecc71";
+    isRoundActive = false; if (!isSinglePlayerMode) { clearInterval(countdownInterval); timerDisplay.style.display = 'none'; }
+    actionArea.style.display = 'none'; document.getElementById('p1-score').innerText = data.scores[0]; if (!isSinglePlayerMode) document.getElementById('p2-score').innerText = data.scores[1];
+    statusMsg.innerText = `${data.winnerName}\nCevap: ${data.correctPlayer}`; statusMsg.style.color = "#2ecc71";
 });
 
 socket.on('gameOver', (data) => {
-    isRoundActive = false;
-    clearInterval(countdownInterval);
-    clearInterval(spGlobalInterval);
-    actionArea.style.display = 'none';
-    timerDisplay.style.display = 'none';
-    matchTeamsContainer.style.display = 'none';
-    
+    isRoundActive = false; clearInterval(countdownInterval); clearInterval(spGlobalInterval); actionArea.style.display = 'none'; timerDisplay.style.display = 'none'; matchTeamsContainer.style.display = 'none';
     document.getElementById('p1-score').innerText = data.scores[0];
-    if (isSinglePlayerMode) {
-        statusMsg.innerText = `SÜRE BİTTİ! ⏰\nToplam Skorun: ${data.scores[0]}`;
-    } else {
-        document.getElementById('p2-score').innerText = data.scores[1];
-        statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`;
-    }
+    if (isSinglePlayerMode) statusMsg.innerText = `SÜRE BİTTİ! ⏰\nToplam Skorun: ${data.scores[0]}`; else { document.getElementById('p2-score').innerText = data.scores[1]; statusMsg.innerText = `🏆 KAZANAN: ${data.winnerName.toUpperCase()} 🏆\n(Son Cevap: ${data.correctPlayer})`; }
     statusMsg.style.color = "#3498db";
-
     var duration = 3 * 1000; var end = Date.now() + duration;
-    (function frame() {
-        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] });
-        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] });
-        if (Date.now() < end) requestAnimationFrame(frame);
-    }());
+    (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FFD700', '#FFFFFF', '#1E90FF'] }); if (Date.now() < end) requestAnimationFrame(frame); }());
 });
 
-socket.on('playAgainReady', () => {
-    isFirstRoundSP = true;
-    if (isSinglePlayerMode) { clearInterval(spGlobalInterval); spTimerLeft = 120; } else { clearInterval(countdownInterval); }
-    document.getElementById('p1-score').innerText = "0";
-    document.getElementById('p2-score').innerText = "0";
-});
+socket.on('playAgainReady', () => { isFirstRoundSP = true; if (isSinglePlayerMode) { clearInterval(spGlobalInterval); spTimerLeft = 120; } else clearInterval(countdownInterval); document.getElementById('p1-score').innerText = "0"; document.getElementById('p2-score').innerText = "0"; });
 
-document.getElementById('exit-btn').addEventListener('click', () => { window.location.reload(); });
-document.getElementById('waiting-exit-btn').addEventListener('click', () => { window.location.reload(); });
-document.getElementById('new-game-btn').addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
+document.getElementById('exit-btn').addEventListener('click', () => { window.location.reload(); }); document.getElementById('waiting-exit-btn').addEventListener('click', () => { window.location.reload(); }); document.getElementById('new-game-btn').addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
