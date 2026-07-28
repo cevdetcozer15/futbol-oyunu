@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kesişim: Futbol Online</title>
     <link rel="stylesheet" href="style.css?v=6">
+    <style>
+        .custom-team-box { background: #34495e; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; }
+        .input-group { display: flex; justify-content: center; gap: 5px; margin-bottom: 10px; }
+        .input-group input { flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 16px; }
+        .mic-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.3s;}
+        .mic-btn:hover { background: #c0392b; transform: scale(1.1); }
+        .mic-btn.listening { animation: pulse 1s infinite; background: #2ecc71; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
+    </style>
 </head>
 <body>
     <!-- Lobi Ekranı -->
@@ -22,7 +31,6 @@
             </div>
         </div>
 
-        <!-- 1. AŞAMA: Ana Mod Seçim Ekranı -->
         <div id="mode-selection" style="display: none;" class="mode-container">
             <h3>Oyun Modunu Seç</h3>
             <button id="modeTeamsBtn" class="mode-btn">⚔️ Takım - Takım</button>
@@ -30,7 +38,6 @@
             <button id="cancelModeBtn" class="cancel-btn" style="margin-top: 10px;">❌ İptal</button>
         </div>
 
-        <!-- 2. AŞAMA: Takım - Takım Alt Menüsü -->
         <div id="sub-mode-selection" style="display: none;" class="mode-container">
             <h3>Lig Seçimi</h3>
             <button id="modeNormalBtn" class="mode-btn">🌍 Normal Oyun (Klasik)</button>
@@ -47,19 +54,14 @@
         <p>Rakibinin girmesi gereken kod:</p>
         <div class="room-code-display" id="displayRoomCode">---</div>
         <p>Bekleniyor...</p>
-
-        <div class="game-controls">
-            <button id="waiting-exit-btn">🚪 Çıkış</button>
-        </div>
+        <div class="game-controls"><button id="waiting-exit-btn">🚪 Çıkış</button></div>
     </div>
 
     <!-- Oyun Ekranı -->
     <div id="game" class="screen">
         <div id="leaderboard-container" style="display: none;">
             <h3>🏆 Top 5 Skorer</h3>
-            <ul id="leaderboard-list">
-                <li>Yükleniyor...</li>
-            </ul>
+            <ul id="leaderboard-list"><li>Yükleniyor...</li></ul>
         </div>
 
         <div class="scoreboard">
@@ -69,9 +71,27 @@
 
         <div id="status-message">Hazır olun...</div>
 
+        <!-- YENİ: Takım Belirleme Alanı (Mikrofonlu) -->
+        <div id="team-selection-area" class="custom-team-box" style="display: none;">
+            <h3 style="color: #f1c40f; margin-bottom: 5px;">Kendi Arenanı Yarat</h3>
+            <p style="font-size: 12px; margin-bottom: 15px;">Takımları yaz veya mikrofonla söyle!</p>
+            
+            <div class="input-group">
+                <input type="text" id="custom-team-a" placeholder="1. Takım (Örn: Galatasaray)">
+                <button class="mic-btn" id="mic-a" title="Sesli Söyle">🎤</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="custom-team-b" placeholder="2. Takım (Tekli modda boş bırakabilirsin)">
+                <button class="mic-btn" id="mic-b" title="Sesli Söyle">🎤</button>
+            </div>
+            
+            <button id="confirm-teams-btn" class="mode-btn" style="background-color: #2ecc71; margin-top: 10px; width: 100%;">Takımları Onayla & Maça Başla</button>
+            <div id="custom-team-error" style="color: #e74c3c; margin-top: 10px; font-weight: bold;"></div>
+        </div>
+
         <div id="timer-display" style="display: none;">30</div>
 
-        <div class="teams-container">
+        <div class="teams-container" id="match-teams-container" style="display: none;">
             <div class="team-box" id="teamA-box">?</div>
             <div class="team-box" id="teamB-box">?</div>
         </div>
@@ -90,6 +110,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
 </body>
 </html>
