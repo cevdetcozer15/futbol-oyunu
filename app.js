@@ -1,5 +1,12 @@
 const socket = io();
 
+// YENİ: Anlık bağlantı kopmalarına karşı odaya geri dönme güvencesi
+socket.on('connect', () => {
+    if (myRoomCode) {
+        socket.emit('rejoinRoom', myRoomCode);
+    }
+});
+
 // --- SES TANIMA ---
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -256,10 +263,31 @@ socket.on('newRound', (teams) => {
     }, 1000);
 });
 
-function sendAnswer() { if (!isRoundActive) return; const answer = answerInput.value; if (answer.trim() !== "") { socket.emit('submitAnswer', { roomCode: myRoomCode, answer: answer }); answerInput.value = ""; } }
+function sendAnswer() { 
+    if (!isRoundActive) return; 
+    const answer = answerInput.value; 
+    if (answer.trim() !== "") { 
+        socket.emit('submitAnswer', { roomCode: myRoomCode, answer: answer }); 
+        answerInput.value = ""; 
+    } 
+}
 document.getElementById('submit-answer-btn').addEventListener('click', sendAnswer);
 answerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendAnswer(); });
-passButton.addEventListener('click', () => { if (!isRoundActive) return; socket.emit('passVote', myRoomCode); passButton.disabled = true; passButton.innerText = isSinglePlayerMode ? 'Geçiliyor...' : 'Rakip Bekleniyor... ⏳'; });
+
+passButton.addEventListener('click', () => { 
+    if (!isRoundActive) return; 
+    socket.emit('passVote', myRoomCode); 
+    passButton.disabled = true; 
+    passButton.innerText = isSinglePlayerMode ? 'Geçiliyor...' : 'Rakip Bekleniyor... ⏳'; 
+    
+    // YENİ: Kilitlenme Karşıtı Sigorta (Fail-Safe) - 3 Saniye sonra sunucu cevap vermezse butonu geri açar
+    setTimeout(() => {
+        if (passButton.disabled && isRoundActive) {
+            passButton.disabled = false;
+            passButton.innerText = 'Pas Geç ⏭️';
+        }
+    }, 3000);
+});
 
 socket.on('roundPassed', (data) => {
     isRoundActive = false; if (!isSinglePlayerMode) { clearInterval(countdownInterval); timerDisplay.style.display = 'none'; }
@@ -279,7 +307,6 @@ socket.on('roundWon', (data) => {
     statusMsg.innerText = `${data.winnerName}\nCevap: ${data.correctPlayer}`; statusMsg.style.color = "#2ecc71";
 });
 
-// YENİ: Oyun bittiğinde arka planda çalışan ve ekranı ezen tüm sayıcıları anında imha eden kilit eklendi!
 socket.on('gameOver', (data) => {
     isRoundActive = false; 
     clearInterval(countdownInterval); 
