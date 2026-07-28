@@ -37,6 +37,22 @@ const rooms = {};
 
 function generateRoomCode() { return Math.floor(1000 + Math.random() * 9000).toString(); }
 
+function triggerTeamSelection(roomCode) {
+    const room = rooms[roomCode];
+    if(!room) return;
+    room.customTeamA = "";
+    room.customTeamB = "";
+    room.teamAReady = false;
+    room.teamBReady = false;
+
+    room.players.forEach((p, index) => {
+        io.to(p.id).emit('requestTeamSelection', {
+            isSinglePlayer: room.isSinglePlayer,
+            playerIndex: index
+        });
+    });
+}
+
 io.on('connection', (socket) => {
     socket.emit('updateLeaderboard', topScores);
 
@@ -45,7 +61,7 @@ io.on('connection', (socket) => {
         rooms[roomCode] = { isSinglePlayer: true, gameMode: gameMode || 'teams', players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0 };
         socket.join(roomCode);
         socket.emit('gameReadySP', { p1: playerName, roomCode });
-        io.to(roomCode).emit('requestTeamSelection');
+        triggerTeamSelection(roomCode);
     });
 
     socket.on('createRoom', ({ playerName, gameMode }) => {
@@ -61,65 +77,96 @@ io.on('connection', (socket) => {
             room.players.push({ id: socket.id, name: playerName, score: 0 });
             socket.join(roomCode);
             io.to(roomCode).emit('gameReady', { p1: room.players[0].name, p2: room.players[1].name });
-            io.to(roomCode).emit('requestTeamSelection');
+            triggerTeamSelection(roomCode);
         } else {
             socket.emit('errorMsg', "Oda bulunamadı veya dolu.");
         }
     });
 
-    // YENİ: Oyuncuların mikrofonla/elle yazdığı takımları doğruluyoruz
-    socket.on('validateCustomTeams', ({ roomCode, teamA, teamB }) => {
+    // YENİ: Oyuncular sadece kendi kutularını doldurup gönderirler
+    socket.on('submitCustomTeam', ({ roomCode, teamA, teamB }) => {
         const room = rooms[roomCode];
-        if (!room) return;
-
-        let cleanA = cleanText(teamA.trim());
-        let cleanB = cleanText(teamB.trim());
+        if(!room) return;
         
-        if (cleanA === "") { socket.emit('invalidCustomTeams', "En azından 1. Takımı yazmalısın!"); return; }
+        const playerIndex = room.players.findIndex(p => p.id === socket.id);
+        
+        if (room.isSinglePlayer) {
+            room.customTeamA = teamA;
+            room.customTeamB = teamB;
+            room.teamAReady = true;
+            room.teamBReady = true;
+        } else {
+            if (playerIndex === 0) {
+                room.customTeamA = teamA;
+                room.teamAReady = true;
+            } else if (playerIndex === 1) {
+                room.customTeamB = teamB;
+                room.teamBReady = true;
+            }
+        }
+
+        io.to(roomCode).emit('teamLockedMsg', playerIndex);
+
+        // İki oyuncu da okeye bastıysa veya tek oyuncuysa kontrol et
+        if (room.isSinglePlayer || (room.teamAReady && room.teamBReady)) {
+            validateAndStart(roomCode);
+        }
+    });
+
+    function validateAndStart(roomCode) {
+        const room = rooms[roomCode];
+        let cleanA = cleanText(room.customTeamA.trim());
+        let cleanB = cleanText(room.customTeamB.trim());
+
+        if (cleanA === "" && cleanB === "") {
+            room.teamAReady = false; room.teamBReady = false;
+            io.to(roomCode).emit('invalidCustomTeams', "Takım alanları boş olamaz!"); return;
+        }
+
+        if (!room.isSinglePlayer && (cleanA === "" || cleanB === "")) {
+            room.teamAReady = false; room.teamBReady = false;
+            io.to(roomCode).emit('invalidCustomTeams', "Her iki oyuncu da kendi takımını yazmak zorunda!"); return;
+        }
 
         const activeDB = room.gameMode === 'superlig' ? dbSuperLig : dbClassic;
 
-        // Eğer tek oyunculu modda 2. takımı boş bıraktıysa, sistem kendi bulsun
+        // Tek oyunculu modda 2. takımı sistem bulur
         if (cleanB === "" && room.isSinglePlayer) {
             const possiblePlayers = activeDB.filter(p => p.teams.some(t => cleanText(t).includes(cleanA)));
             if (possiblePlayers.length === 0) {
-                socket.emit('invalidCustomTeams', "Veritabanında bu takımda oynamış kimse yok!"); return;
+                room.teamAReady = false; room.teamBReady = false;
+                io.to(roomCode).emit('invalidCustomTeams', "Veritabanında bu takımda oynamış kimse yok!"); return;
             }
             const randomPlayer = possiblePlayers[Math.floor(Math.random() * possiblePlayers.length)];
             const otherTeams = randomPlayer.teams.filter(t => !cleanText(t).includes(cleanA));
-            
             if (otherTeams.length === 0) {
-                socket.emit('invalidCustomTeams', "Bu adamın başka takımı yok!"); return;
+                room.teamAReady = false; room.teamBReady = false;
+                io.to(roomCode).emit('invalidCustomTeams', "Bu adamın başka takımı yok!"); return;
             }
-            
             cleanB = otherTeams[Math.floor(Math.random() * otherTeams.length)];
-            
-            room.currentTeamA = teamA;
+            room.currentTeamA = room.customTeamA;
             room.currentTeamB = cleanB;
             room.correctAnswer = randomPlayer.name.toUpperCase();
             startValidatedRound(roomCode);
             return;
         }
 
-        if (cleanA !== "" && cleanB !== "") {
-            const matchedPlayers = activeDB.filter(p => 
-                p.teams.some(t => cleanText(t).includes(cleanA)) && 
-                (room.gameMode === 'country' ? cleanText(p.country).includes(cleanB) : p.teams.some(t => cleanText(t).includes(cleanB)))
-            );
+        const matchedPlayers = activeDB.filter(p => 
+            p.teams.some(t => cleanText(t).includes(cleanA)) && 
+            (room.gameMode === 'country' ? cleanText(p.country).includes(cleanB) : p.teams.some(t => cleanText(t).includes(cleanB)))
+        );
 
-            if (matchedPlayers.length > 0) {
-                const randomPlayer = matchedPlayers[Math.floor(Math.random() * matchedPlayers.length)];
-                room.currentTeamA = teamA;
-                room.currentTeamB = teamB;
-                room.correctAnswer = randomPlayer.name.toUpperCase();
-                startValidatedRound(roomCode);
-            } else {
-                socket.emit('invalidCustomTeams', "Bu iki takımda ortak oynamış bir efsane yok! Başka takım söyle.");
-            }
+        if (matchedPlayers.length > 0) {
+            const randomPlayer = matchedPlayers[Math.floor(Math.random() * matchedPlayers.length)];
+            room.currentTeamA = room.customTeamA;
+            room.currentTeamB = room.customTeamB;
+            room.correctAnswer = randomPlayer.name.toUpperCase();
+            startValidatedRound(roomCode);
         } else {
-            socket.emit('invalidCustomTeams', "İki takımı da doldurmalısın!");
+            room.teamAReady = false; room.teamBReady = false;
+            io.to(roomCode).emit('invalidCustomTeams', "Bu iki takımda ortak oynamış bir efsane yok! Başka takımlar deneyin.");
         }
-    });
+    }
 
     function startValidatedRound(roomCode) {
         const room = rooms[roomCode];
@@ -134,7 +181,7 @@ io.on('connection', (socket) => {
                 if(room.roundActive) {
                     room.roundActive = false;
                     io.to(roomCode).emit('timeUp', { correctPlayer: room.correctAnswer });
-                    setTimeout(() => { io.to(roomCode).emit('requestTeamSelection'); }, 4000);
+                    setTimeout(() => { triggerTeamSelection(roomCode); }, 4000);
                 }
             }, 33000);
         }
@@ -165,13 +212,13 @@ io.on('connection', (socket) => {
 
             if (room.isSinglePlayer) {
                 io.to(roomCode).emit('roundWon', { winnerName: "DOĞRU!", correctPlayer: matchedPlayer.name.toUpperCase(), scores: [room.players[0].score, 0] });
-                setTimeout(() => { io.to(roomCode).emit('requestTeamSelection'); }, 1500);
+                setTimeout(() => { triggerTeamSelection(roomCode); }, 1500);
             } else {
                 if (room.players[winnerIndex].score >= WIN_SCORE) {
                     io.to(roomCode).emit('gameOver', { winnerName: room.players[winnerIndex].name, correctPlayer: matchedPlayer.name.toUpperCase(), scores: [room.players[0].score, room.players[1].score] });
                 } else {
                     io.to(roomCode).emit('roundWon', { winnerName: room.players[winnerIndex].name, correctPlayer: matchedPlayer.name.toUpperCase(), scores: [room.players[0].score, room.players[1].score] });
-                    setTimeout(() => { io.to(roomCode).emit('requestTeamSelection'); }, 4000);
+                    setTimeout(() => { triggerTeamSelection(roomCode); }, 4000);
                 }
             }
         } else {
@@ -186,14 +233,14 @@ io.on('connection', (socket) => {
         if (room.isSinglePlayer) {
             room.roundActive = false;
             io.to(roomCode).emit('roundPassed', { correctPlayer: room.correctAnswer });
-            setTimeout(() => { io.to(roomCode).emit('requestTeamSelection'); }, 4000);
+            setTimeout(() => { triggerTeamSelection(roomCode); }, 4000);
         } else {
             room.passVotes++; 
             if (room.passVotes >= 2) {
                 room.roundActive = false; 
                 clearTimeout(room.roundTimer);
                 io.to(roomCode).emit('roundPassed', { correctPlayer: room.correctAnswer });
-                setTimeout(() => { io.to(roomCode).emit('requestTeamSelection'); }, 4000);
+                setTimeout(() => { triggerTeamSelection(roomCode); }, 4000);
             }
         }
     });
@@ -215,7 +262,7 @@ io.on('connection', (socket) => {
             if(room.players[1]) room.players[1].score = 0;
             clearTimeout(room.roundTimer);
             io.to(roomCode).emit('playAgainReady');
-            io.to(roomCode).emit('requestTeamSelection'); 
+            triggerTeamSelection(roomCode); 
         }
     });
 
