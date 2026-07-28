@@ -9,29 +9,24 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
-// YENİ: Akıllı Veritabanı Birleştirici ve Filtreleyici
+const BIG_FOUR = ["galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor"];
+
 function getDB(mode) {
     try {
+        if (mode === 'superlig') return JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
         const classic = JSON.parse(fs.readFileSync('./futbolcular.json', 'utf8'));
         
-        if (mode === 'superlig') {
-            return JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
-        }
-        
         if (mode === 'country') {
-            // Takım-Ülke modunda hem klasikleri hem de tek takımlı milli oyuncuları getirir
             const milli = JSON.parse(fs.readFileSync('./millitakim.json', 'utf8'));
             return [...classic, ...milli];
         }
 
         if (mode === 'custom') {
-            // "Kendi Arenanı Yarat" modunda veritabanında ne var ne yok her şeyi tarar
             const superlig = JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
             const milli = JSON.parse(fs.readFileSync('./millitakim.json', 'utf8'));
             return [...classic, ...superlig, ...milli];
         }
 
-        // Klasik (Takım - Takım) Mod: Oyunun çökmemesi için SADECE en az 2 takımı olanları getirir!
         return classic.filter(p => p.teams.length >= 2);
 
     } catch (err) { 
@@ -85,18 +80,47 @@ function startRound(roomCode) {
     room.passVotes = 0; clearTimeout(room.roundTimer); 
 
     const activeDB = getDB(room.gameMode);
-    
-    // Eğer filtreleme sonucu liste boşaldıysa güvenli çıkış yap
     if (activeDB.length === 0) return; 
 
-    let randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
+    let randomPlayer;
 
-    if (room.gameMode === 'country') {
+    if (room.gameMode === 'superlig') {
+        // 4 Büyükler'de oynamış oyuncuları filtrele
+        const big4Players = activeDB.filter(p => 
+            p.teams.some(t => BIG_FOUR.includes(cleanText(t))) && p.teams.length >= 2
+        );
+        
+        randomPlayer = big4Players.length > 0 
+            ? big4Players[Math.floor(Math.random() * big4Players.length)]
+            : activeDB[Math.floor(Math.random() * activeDB.length)];
+
+        // Oyuncunun 4 Büyükler takımlarını bul
+        const playerBig4Teams = randomPlayer.teams.filter(t => BIG_FOUR.includes(cleanText(t)));
+        const chosenBig4 = playerBig4Teams[Math.floor(Math.random() * playerBig4Teams.length)];
+        
+        // Diğer takımlarından birini seç
+        const otherTeams = randomPlayer.teams.filter(t => cleanText(t) !== cleanText(chosenBig4));
+        const chosenOther = otherTeams[Math.floor(Math.random() * otherTeams.length)];
+
+        // Kutu sırasını rastgele yap (Sürekli sol tarafta 4 Büyükler olmasın diye)
+        if (Math.random() > 0.5) {
+            room.currentTeamA = chosenBig4;
+            room.currentTeamB = chosenOther;
+        } else {
+            room.currentTeamA = chosenOther;
+            room.currentTeamB = chosenBig4;
+        }
+
+    } else if (room.gameMode === 'country') {
+        randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
         const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
-        room.currentTeamA = randomTeam; room.currentTeamB = randomPlayer.country;
+        room.currentTeamA = randomTeam; 
+        room.currentTeamB = randomPlayer.country;
     } else {
+        randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
         const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
-        room.currentTeamA = shuffledTeams[0]; room.currentTeamB = shuffledTeams[1];
+        room.currentTeamA = shuffledTeams[0]; 
+        room.currentTeamB = shuffledTeams[1];
     }
 
     room.correctAnswer = randomPlayer.name.toUpperCase();
