@@ -15,10 +15,8 @@ function listenForTeam(inputId, micBtnId) {
         alert("Tarayıcın sesli komutu desteklemiyor. Lütfen Chrome, Safari veya Edge kullan.");
         return;
     }
-    
     const inputField = document.getElementById(inputId);
     const micBtn = document.getElementById(micBtnId);
-    
     inputField.placeholder = "Dinleniyor...";
     micBtn.classList.add("listening");
     recognition.start();
@@ -28,20 +26,15 @@ function listenForTeam(inputId, micBtnId) {
         inputField.value = transcript.toLowerCase().replace('.', '');
         micBtn.classList.remove("listening");
     };
-    
     recognition.onerror = (event) => {
         inputField.placeholder = "Anlaşılamadı, tekrar yaz/söyle.";
         micBtn.classList.remove("listening");
     };
-    
-    recognition.onspeechend = () => {
-        micBtn.classList.remove("listening");
-    }
+    recognition.onspeechend = () => { micBtn.classList.remove("listening"); }
 }
 
 document.getElementById('mic-a').addEventListener('click', () => listenForTeam('custom-team-a', 'mic-a'));
 document.getElementById('mic-b').addEventListener('click', () => listenForTeam('custom-team-b', 'mic-b'));
-// -----------------------------------
 
 const countryFlags = { "arjantin": "ar", "belçika": "be", "uruguay": "uy", "italya": "it", "bosna hersek": "ba", "sırbistan": "rs", "ingiltere": "gb-eng", "mısır": "eg", "norveç": "no", "brezilya": "br", "polonya": "pl", "fransa": "fr", "portekiz": "pt", "gürcistan": "ge", "isveç": "se", "şili": "cl", "türkiye": "tr", "ispanya": "es", "hollanda": "nl", "fildişi sahili": "ci", "kolombiya": "co", "almanya": "de", "çekya": "cz", "cezayir": "dz", "fas": "ma", "hırvatistan": "hr", "senegal": "sn", "galler": "gb-wls", "kamerun": "cm", "nijerya": "ng", "güney kore": "kr", "macaristan": "hu", "ekvador": "ec", "gabon": "ga", "isviçre": "ch", "danimarka": "dk", "abd": "us", "slovenya": "si", "slovakya": "sk", "iskoçya": "gb-sct", "surinam": "sr", "iran": "ir", "jamaika": "jm", "burkina faso": "bf", "japonya": "jp", "kosova": "xk", "togo": "tg", "yeşil burun adaları": "cv", "yunanistan": "gr", "arnavutluk": "al", "libya": "ly", "demokratik kongo cumhuriyeti": "cd", "karadağ": "me", "avusturya": "at", "ukrayna": "ua", "gine": "gn", "kanada": "ca", "kuzey makedonya": "mk", "romanya": "ro" };
 
@@ -68,6 +61,7 @@ let isFirstRoundSP = true;
 let spTimerLeft = 120;
 let spGlobalInterval;
 let pendingTarget = ""; 
+let myPlayerIndex = 0; // YENİ: Oyuncunun 1. mi 2. mi olduğunu tutar
 
 function showModeSelection(target) { pendingTarget = target; document.querySelector('.lobby-actions').style.display = 'none'; document.getElementById('sub-mode-selection').style.display = 'none'; document.getElementById('mode-selection').style.display = 'flex'; }
 function hideModeSelection() { pendingTarget = ""; document.getElementById('mode-selection').style.display = 'none'; document.getElementById('sub-mode-selection').style.display = 'none'; document.querySelector('.lobby-actions').style.display = 'flex'; }
@@ -110,7 +104,6 @@ socket.on('roomCreated', (code) => {
 socket.on('errorMsg', (msg) => { document.getElementById('lobby-message').innerText = msg; });
 
 socket.on('gameReady', (players) => {
-    isSinglePlayerMode = false;
     document.getElementById('p1-name').innerText = players.p1;
     document.getElementById('p2-name').innerText = players.p2;
     document.getElementById('p2-score-container').style.display = 'block';
@@ -121,7 +114,6 @@ socket.on('gameReady', (players) => {
 });
 
 socket.on('gameReadySP', (data) => {
-    isSinglePlayerMode = true;
     isFirstRoundSP = true;
     myRoomCode = data.roomCode;
     document.getElementById('p1-name').innerText = data.p1;
@@ -138,26 +130,92 @@ socket.on('updateLeaderboard', (topScores) => {
     topScores.forEach((item, index) => { leaderboardList.innerHTML += `<li><span>${index + 1}. ${item.name}</span> <span>${item.score} P</span></li>`; });
 });
 
-// YENİ: Tur başlamadan önce takım seçim ekranı açılır
-socket.on('requestTeamSelection', () => {
+// YENİ: Oyuncu 1 ve Oyuncu 2'nin Kilitli Arayüz Dağılımı
+socket.on('requestTeamSelection', (data) => {
+    myPlayerIndex = data.playerIndex;
+    isSinglePlayerMode = data.isSinglePlayer;
+
     statusMsg.innerText = "";
     matchTeamsContainer.style.display = 'none';
     actionArea.style.display = 'none';
     timerDisplay.style.display = 'none';
     teamSelectionArea.style.display = 'block';
     customTeamError.innerText = "";
-    document.getElementById('custom-team-a').value = "";
-    document.getElementById('custom-team-b').value = "";
+    
+    const inputA = document.getElementById('custom-team-a');
+    const inputB = document.getElementById('custom-team-b');
+    const micA = document.getElementById('mic-a');
+    const micB = document.getElementById('mic-b');
+    const btn = document.getElementById('confirm-teams-btn');
+
+    inputA.value = "";
+    inputB.value = "";
+    inputA.disabled = false;
+    inputB.disabled = false;
+    micA.style.display = "flex";
+    micB.style.display = "flex";
+    btn.innerText = "Takımı Onayla & Hazır Ol";
+    btn.disabled = false;
+
+    if (isSinglePlayerMode) {
+        inputA.placeholder = "1. Takım (Sen Seç)";
+        inputB.placeholder = "2. Takım (Boş Bırakabilirsin)";
+    } else {
+        if (myPlayerIndex === 0) {
+            inputA.placeholder = "1. Takım (Sen Seç)";
+            inputB.placeholder = "2. Takım (Rakip Seçiyor 🔒)";
+            inputB.disabled = true;
+            micB.style.display = "none";
+        } else {
+            inputA.placeholder = "1. Takım (Rakip Seçiyor 🔒)";
+            inputB.placeholder = "2. Takım (Sen Seç)";
+            inputA.disabled = true;
+            micA.style.display = "none";
+        }
+    }
 });
 
 document.getElementById('confirm-teams-btn').addEventListener('click', () => {
     const teamA = document.getElementById('custom-team-a').value;
     const teamB = document.getElementById('custom-team-b').value;
-    socket.emit('validateCustomTeams', { roomCode: myRoomCode, teamA: teamA, teamB: teamB });
+    
+    document.getElementById('confirm-teams-btn').innerText = "Rakip Bekleniyor ⏳";
+    document.getElementById('confirm-teams-btn').disabled = true;
+    document.getElementById('custom-team-a').disabled = true;
+    document.getElementById('custom-team-b').disabled = true;
+    document.getElementById('mic-a').style.display = "none";
+    document.getElementById('mic-b').style.display = "none";
+    
+    socket.emit('submitCustomTeam', { roomCode: myRoomCode, teamA: teamA, teamB: teamB });
+});
+
+// YENİ: Rakip kendi takımını seçtiğinde ekranda "Seçti" uyarısı verir
+socket.on('teamLockedMsg', (lockedPlayerIndex) => {
+    if (!isSinglePlayerMode && lockedPlayerIndex !== myPlayerIndex) {
+        if (lockedPlayerIndex === 0) { document.getElementById('custom-team-a').placeholder = "Rakip Seçti ✔️"; } 
+        else { document.getElementById('custom-team-b').placeholder = "Rakip Seçti ✔️"; }
+    }
 });
 
 socket.on('invalidCustomTeams', (msg) => {
     customTeamError.innerText = msg;
+    document.getElementById('confirm-teams-btn').innerText = "Tekrar Dene";
+    document.getElementById('confirm-teams-btn').disabled = false;
+    
+    if (isSinglePlayerMode) {
+        document.getElementById('custom-team-a').disabled = false;
+        document.getElementById('custom-team-b').disabled = false;
+        document.getElementById('mic-a').style.display = "flex";
+        document.getElementById('mic-b').style.display = "flex";
+    } else {
+        if (myPlayerIndex === 0) {
+            document.getElementById('custom-team-a').disabled = false;
+            document.getElementById('mic-a').style.display = "flex";
+        } else {
+            document.getElementById('custom-team-b').disabled = false;
+            document.getElementById('mic-b').style.display = "flex";
+        }
+    }
 });
 
 socket.on('newRound', (teams) => {
