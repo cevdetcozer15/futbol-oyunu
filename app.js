@@ -17,6 +17,18 @@ function listenForTeam(inputId, micBtnId) {
     }
     const inputField = document.getElementById(inputId);
     const micBtn = document.getElementById(micBtnId);
+
+    // YENİ: Eğer mikrofon zaten açıksa, tıklandığında kapansın
+    if (micBtn.classList.contains("listening")) {
+        recognition.stop();
+        micBtn.classList.remove("listening");
+        inputField.placeholder = "1. Takım (Sen Seç)"; 
+        if (inputId === 'custom-team-b') {
+            inputField.placeholder = isSinglePlayerMode ? "2. Takım (Boş Bırakabilirsin)" : "2. Takım (Sen Seç)";
+        }
+        return;
+    }
+    
     inputField.placeholder = "Dinleniyor...";
     micBtn.classList.add("listening");
     recognition.start();
@@ -61,7 +73,7 @@ let isFirstRoundSP = true;
 let spTimerLeft = 120;
 let spGlobalInterval;
 let pendingTarget = ""; 
-let myPlayerIndex = 0; // YENİ: Oyuncunun 1. mi 2. mi olduğunu tutar
+let myPlayerIndex = 0;
 
 function showModeSelection(target) { pendingTarget = target; document.querySelector('.lobby-actions').style.display = 'none'; document.getElementById('sub-mode-selection').style.display = 'none'; document.getElementById('mode-selection').style.display = 'flex'; }
 function hideModeSelection() { pendingTarget = ""; document.getElementById('mode-selection').style.display = 'none'; document.getElementById('sub-mode-selection').style.display = 'none'; document.querySelector('.lobby-actions').style.display = 'flex'; }
@@ -130,7 +142,6 @@ socket.on('updateLeaderboard', (topScores) => {
     topScores.forEach((item, index) => { leaderboardList.innerHTML += `<li><span>${index + 1}. ${item.name}</span> <span>${item.score} P</span></li>`; });
 });
 
-// YENİ: Oyuncu 1 ve Oyuncu 2'nin Kilitli Arayüz Dağılımı
 socket.on('requestTeamSelection', (data) => {
     myPlayerIndex = data.playerIndex;
     isSinglePlayerMode = data.isSinglePlayer;
@@ -154,6 +165,13 @@ socket.on('requestTeamSelection', (data) => {
     inputB.disabled = false;
     micA.style.display = "flex";
     micB.style.display = "flex";
+    
+    if (recognition) {
+        recognition.stop();
+        micA.classList.remove("listening");
+        micB.classList.remove("listening");
+    }
+
     btn.innerText = "Takımı Onayla & Hazır Ol";
     btn.disabled = false;
 
@@ -186,10 +204,11 @@ document.getElementById('confirm-teams-btn').addEventListener('click', () => {
     document.getElementById('mic-a').style.display = "none";
     document.getElementById('mic-b').style.display = "none";
     
+    if (recognition) recognition.stop();
+    
     socket.emit('submitCustomTeam', { roomCode: myRoomCode, teamA: teamA, teamB: teamB });
 });
 
-// YENİ: Rakip kendi takımını seçtiğinde ekranda "Seçti" uyarısı verir
 socket.on('teamLockedMsg', (lockedPlayerIndex) => {
     if (!isSinglePlayerMode && lockedPlayerIndex !== myPlayerIndex) {
         if (lockedPlayerIndex === 0) { document.getElementById('custom-team-a').placeholder = "Rakip Seçti ✔️"; } 
