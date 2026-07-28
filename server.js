@@ -9,11 +9,35 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
+// YENİ: Akıllı Veritabanı Birleştirici ve Filtreleyici
 function getDB(mode) {
     try {
-        if (mode === 'superlig') return JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
-        return JSON.parse(fs.readFileSync('./futbolcular.json', 'utf8'));
-    } catch (err) { return []; }
+        const classic = JSON.parse(fs.readFileSync('./futbolcular.json', 'utf8'));
+        
+        if (mode === 'superlig') {
+            return JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
+        }
+        
+        if (mode === 'country') {
+            // Takım-Ülke modunda hem klasikleri hem de tek takımlı milli oyuncuları getirir
+            const milli = JSON.parse(fs.readFileSync('./millitakim.json', 'utf8'));
+            return [...classic, ...milli];
+        }
+
+        if (mode === 'custom') {
+            // "Kendi Arenanı Yarat" modunda veritabanında ne var ne yok her şeyi tarar
+            const superlig = JSON.parse(fs.readFileSync('./superlig.json', 'utf8'));
+            const milli = JSON.parse(fs.readFileSync('./millitakim.json', 'utf8'));
+            return [...classic, ...superlig, ...milli];
+        }
+
+        // Klasik (Takım - Takım) Mod: Oyunun çökmemesi için SADECE en az 2 takımı olanları getirir!
+        return classic.filter(p => p.teams.length >= 2);
+
+    } catch (err) { 
+        console.log("Veritabanı okuma hatası:", err);
+        return []; 
+    }
 }
 
 let topScores = [];
@@ -44,7 +68,7 @@ function triggerTeamSelection(roomCode) {
         io.to(p.id).emit('requestTeamSelection', { 
             isSinglePlayer: room.isSinglePlayer, 
             playerIndex: index,
-            gameMode: room.gameMode // YENİ: Client'a hangi mod olduğunu bildirir
+            gameMode: room.gameMode 
         }); 
     });
 }
@@ -61,6 +85,10 @@ function startRound(roomCode) {
     room.passVotes = 0; clearTimeout(room.roundTimer); 
 
     const activeDB = getDB(room.gameMode);
+    
+    // Eğer filtreleme sonucu liste boşaldıysa güvenli çıkış yap
+    if (activeDB.length === 0) return; 
+
     let randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
 
     if (room.gameMode === 'country') {
@@ -139,7 +167,6 @@ io.on('connection', (socket) => {
             if (possiblePlayers.length === 0) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Veritabanında bu takımda oynamış kimse yok!"); return; }
             const randomPlayer = possiblePlayers[Math.floor(Math.random() * possiblePlayers.length)];
             
-            // YENİ: Tek oyuncuda mod "Takım-Ülke" ise, sistem karşına rakip ÜLKE getirir
             if (room.gameMode === 'country') {
                 cleanB = randomPlayer.country;
             } else {
