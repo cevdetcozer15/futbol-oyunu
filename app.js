@@ -69,40 +69,15 @@ function listenForTeam(inputId, micBtnId) {
 document.getElementById('mic-a').addEventListener('click', () => listenForTeam('custom-team-a', 'mic-a'));
 document.getElementById('mic-b').addEventListener('click', () => listenForTeam('custom-team-b', 'mic-b'));
 
-// --- BAYRAKLAR VE TAKIM LOGOLARI ---
+// --- BAYRAKLAR VE DİNAMİK TAKIM LOGOLARI ---
 const countryFlags = { "arjantin": "ar", "belçika": "be", "uruguay": "uy", "italya": "it", "bosna hersek": "ba", "sırbistan": "rs", "ingiltere": "gb-eng", "mısır": "eg", "norveç": "no", "brezilya": "br", "polonya": "pl", "fransa": "fr", "portekiz": "pt", "gürcistan": "ge", "isveç": "se", "şili": "cl", "türkiye": "tr", "ispanya": "es", "hollanda": "nl", "fildişi sahili": "ci", "kolombiya": "co", "almanya": "de", "çekya": "cz", "cezayir": "dz", "fas": "ma", "hırvatistan": "hr", "senegal": "sn", "galler": "gb-wls", "kamerun": "cm", "nijerya": "ng", "güney kore": "kr", "macaristan": "hu", "ekvador": "ec", "gabon": "ga", "isviçre": "ch", "danimarka": "dk", "abd": "us", "slovenya": "si", "slovakya": "sk", "iskoçya": "gb-sct", "surinam": "sr", "iran": "ir", "jamaika": "jm", "burkina faso": "bf", "japonya": "jp", "kosova": "xk", "togo": "tg", "yeşil burun adaları": "cv", "yunanistan": "gr", "arnavutluk": "al", "libya": "ly", "demokratik kongo cumhuriyeti": "cd", "karadağ": "me", "avusturya": "at", "ukrayna": "ua", "gine": "gn", "kanada": "ca", "kuzey makedonya": "mk", "romanya": "ro", "meksika": "mx" };
 
-// İSTEDİĞİN TAKIMI BURAYA AYNI FORMATTA EKLEYEBİLİRSİN
-const teamLogos = {
-    "galatasaray": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Galatasaray_Sports_Club_Logo.png",
-    "fenerbahçe": "https://upload.wikimedia.org/wikipedia/tr/8/86/Fenerbah%C3%A7e_SK.png",
-    "beşiktaş": "https://upload.wikimedia.org/wikipedia/commons/2/2a/Besiktas_JK_logotype.svg",
-    "trabzonspor": "https://upload.wikimedia.org/wikipedia/tr/a/ab/TrabzonsporAmblemi.png",
-    "real madrid": "https://upload.wikimedia.org/wikipedia/tr/b/b9/Real_Madrid_logo.png",
-    "barcelona": "https://upload.wikimedia.org/wikipedia/tr/d/d4/FC_Barcelona_logo.svg",
-    "manchester city": "https://upload.wikimedia.org/wikipedia/tr/f/fa/Manchester_City.png",
-    "bayern münih": "https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg",
-    "inter": "https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg",
-    "arsenal": "https://upload.wikimedia.org/wikipedia/tr/8/82/Arsenal_FC.png",
-    "ac milan": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg",
-    "juventus": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Juventus_FC_-_krag.svg",
-    "manchester united": "https://upload.wikimedia.org/wikipedia/tr/b/b6/Manchester_United_FC_logo.png",
-    "chelsea": "https://upload.wikimedia.org/wikipedia/tr/3/30/Chelsea_FC_logo.svg",
-    "liverpool": "https://upload.wikimedia.org/wikipedia/tr/3/3f/150px-Liverpool_FC_logo.png",
-    "psg": "https://upload.wikimedia.org/wikipedia/tr/a/a7/Paris_Saint-Germain_FC.png",
-    "atletico madrid": "https://upload.wikimedia.org/wikipedia/tr/c/c1/Atletico_madrid_logo.png",
-    "dortmund": "https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg",
-    "roma": "https://upload.wikimedia.org/wikipedia/tr/f/f7/AS_Roma_logo.svg",
-    "napoli": "https://upload.wikimedia.org/wikipedia/commons/2/28/S.S.C._Napoli_logo.svg",
-    "aston villa": "https://upload.wikimedia.org/wikipedia/tr/7/7b/Aston_Villa_FC.png",
-    "tottenham": "https://upload.wikimedia.org/wikipedia/tr/b/b4/Tottenham_Hotspur.png",
-    "bayer leverkusen": "https://upload.wikimedia.org/wikipedia/tr/2/20/Bayer_Leverkusen_logo.png",
-    "ajax": "https://upload.wikimedia.org/wikipedia/tr/c/c2/Ajax_Amsterdam_logo.png",
-    "porto": "https://upload.wikimedia.org/wikipedia/tr/f/f1/FC_Porto.png",
-    "benfica": "https://upload.wikimedia.org/wikipedia/tr/a/a2/SL_Benfica_logo.png",
-    "sporting": "https://upload.wikimedia.org/wikipedia/tr/3/3e/Sporting_CP_logo.png",
-    "psv": "https://upload.wikimedia.org/wikipedia/tr/0/05/PSV_Eindhoven_logo.png"
-};
+// Logos.json dosyasını arka planda okuma
+let teamLogos = {};
+fetch('logos.json')
+    .then(response => response.json())
+    .then(data => { teamLogos = data; })
+    .catch(error => console.log("Logo dosyası okunamadı:", error));
 
 // --- ARAYÜZ DEĞİŞKENLERİ ---
 const screens = { lobby: document.getElementById('lobby'), waiting: document.getElementById('waiting'), game: document.getElementById('game') };
