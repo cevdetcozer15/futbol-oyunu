@@ -79,6 +79,50 @@ fetch('logos.json')
     .then(data => { teamLogos = data; })
     .catch(error => console.log("Logo dosyası okunamadı:", error));
 
+// --- YAZIM HATASI DÜZELTİCİ (FUZZY MATCH) ---
+function findClosestTeamKey(inputStr) {
+    if (!inputStr) return "";
+    let originalInput = inputStr.toLowerCase().trim();
+    
+    // Kelime tamamen doğru yazıldıysa doğrudan döndür
+    if (teamLogos[originalInput]) return originalInput; 
+
+    let closestMatch = originalInput;
+    // Kelime uzunluğu 5 harften fazlaysa 3 harf hatasına, kısaysa 1 harf hatasına izin ver
+    let minDistance = originalInput.length > 5 ? 3 : 2; 
+
+    const keys = Object.keys(teamLogos);
+    for (let k = 0; k < keys.length; k++) {
+        let team = keys[k];
+        
+        // Levenshtein Mesafesi (Harf hatası hesaplama algoritması)
+        let a = originalInput, b = team;
+        let matrix = [];
+        for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+        for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, 
+                        Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+                    );
+                }
+            }
+        }
+        let distance = matrix[b.length][a.length];
+
+        // Bulunan hata payı izin verilen sınırın altındaysa ve şu ana kadarki en iyi eşleşmeyse kaydet
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestMatch = team;
+        }
+    }
+    return closestMatch; 
+}
+
 // --- ARAYÜZ DEĞİŞKENLERİ ---
 const screens = { lobby: document.getElementById('lobby'), waiting: document.getElementById('waiting'), game: document.getElementById('game') };
 const statusMsg = document.getElementById('status-message');
@@ -285,15 +329,17 @@ socket.on('newRound', (teams) => {
         if (count > 0) { statusMsg.innerText = count; } else {
             clearInterval(roundStartInterval); statusMsg.innerText = "YAZ!"; statusMsg.style.color = "#f1c40f";
             
-            // --- TAKIM A LOGO KONTROLÜ ---
+            // --- TAKIM A LOGO KONTROLÜ (FUZZY MATCH İLE) ---
             let tA_key = teams.teamA.toLowerCase().trim();
-            if (teamLogos[tA_key]) {
-                teamABox.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><img src="${teamLogos[tA_key]}" style="height: 50px; margin-bottom: 8px; max-width: 100%; object-fit: contain;"><span style="font-size: 14px; text-align: center;">${teams.teamA.toUpperCase()}</span></div>`;
+            let matchedA_key = findClosestTeamKey(tA_key);
+            
+            if (teamLogos[matchedA_key]) {
+                teamABox.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><img src="${teamLogos[matchedA_key]}" style="height: 50px; margin-bottom: 8px; max-width: 100%; object-fit: contain;"><span style="font-size: 14px; text-align: center;">${teams.teamA.toUpperCase()}</span></div>`;
             } else {
                 teamABox.innerText = teams.teamA.toUpperCase();
             }
 
-            // --- TAKIM B LOGO / BAYRAK KONTROLÜ ---
+            // --- TAKIM B LOGO / BAYRAK KONTROLÜ (FUZZY MATCH İLE) ---
             if (teams.mode === 'country') {
                 let countryKey = teams.teamB.toLowerCase().trim(); 
                 let countryCode = countryFlags[countryKey];
@@ -304,8 +350,10 @@ socket.on('newRound', (teams) => {
                 }
             } else {
                 let tB_key = teams.teamB.toLowerCase().trim();
-                if (teamLogos[tB_key]) {
-                    teamBBox.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><img src="${teamLogos[tB_key]}" style="height: 50px; margin-bottom: 8px; max-width: 100%; object-fit: contain;"><span style="font-size: 14px; text-align: center;">${teams.teamB.toUpperCase()}</span></div>`;
+                let matchedB_key = findClosestTeamKey(tB_key);
+                
+                if (teamLogos[matchedB_key]) {
+                    teamBBox.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><img src="${teamLogos[matchedB_key]}" style="height: 50px; margin-bottom: 8px; max-width: 100%; object-fit: contain;"><span style="font-size: 14px; text-align: center;">${teams.teamB.toUpperCase()}</span></div>`;
                 } else {
                     teamBBox.innerText = teams.teamB.toUpperCase();
                 }
