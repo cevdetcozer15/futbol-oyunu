@@ -1,5 +1,36 @@
 const socket = io();
 
+// --- MOBİL ARKA PLAN / UYKU MODU (VISIBILITY) ÇÖZÜMÜ ---
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        // 1. Sekmeye/Oyuna geri dönüldü! Soket uykudaysa uyandır.
+        if (!socket.connected) {
+            socket.connect();
+        }
+        
+        // 2. Eğer bir odadaysan, sunucuya gizlice "Ben ölmedim, buradayım" sinyali gönder
+        if (myRoomCode) {
+            socket.emit('rejoinRoom', myRoomCode);
+        }
+        
+        // 3. Pas butonu WhatsApp'a geçerken "Geçiliyor..." veya "Bekleniyor..." durumunda donduysa kilidi kır
+        if (passButton && passButton.disabled && isRoundActive) {
+            passButton.disabled = false;
+            passButton.innerText = 'Pas Geç ⏭️';
+        }
+        
+        // 4. Ekranı kaplayan geçiş animasyonu takılı kaldıysa onu yok et
+        if (typeof hideTransition === "function") {
+            hideTransition();
+        }
+    }
+});
+// -------------------------------------------------------
+
+socket.on('connect', () => {
+// ... (Kodun geri kalanı buradan aynen devam ediyor) ...
+const socket = io();
+
 socket.on('connect', () => {
     if (myRoomCode) {
         socket.emit('rejoinRoom', myRoomCode);
