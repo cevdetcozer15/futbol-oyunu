@@ -756,5 +756,22 @@
     { "name": "Enis Destan", "country": "türkiye", "teams": ["trabzonspor"] },
     { "name": "Yusuf Yazıcı", "country": "türkiye", "teams": ["trabzonspor","lille"] },
     { "name": "İsmail YÜksek", "country": "türkiye", "teams": ["fenerbahçe"] },
-
+    { "name": "Victor Osimhen", "country": "nijerya", "teams": ["wolfsburg", "charleroi", "lille", "napoli", "galatasaray"] },
+    { "name": "Gabriel Sara", "country": "brezilya", "teams": ["sao paulo", "norwich city", "galatasaray"] },
+    { "name": "Roland Sallai", "country": "macaristan", "teams": ["freiburg", "galatasaray"] },
+    { "name": "Elias Jelert", "country": "danimarka", "teams": ["copenhagen", "galatasaray"] },
+    { "name": "Youssef En-Nesyri", "country": "fas", "teams": ["sevilla", "fenerbahçe"] },
+    { "name": "Allan Saint-Maximin", "country": "fransa", "teams": ["saint-etienne", "monaco", "nice", "newcastle united", "al ahli", "fenerbahçe"] },
+    { "name": "Sofyan Amrabat", "country": "fas", "teams": ["fiorentina", "manchester united", "fenerbahçe"] },
+    { "name": "Filip Kostić", "country": "sırbistan", "teams": ["eintracht frankfurt", "juventus", "fenerbahçe"] },
+    { "name": "Ciro Immobile", "country": "italya", "teams": ["juventus","dortmund", "sevilla", "lazio", "beşiktaş"] },
+    { "name": "Rafa Silva", "country": "portekiz", "teams": ["feirense", "braga", "benfica", "beşiktaş"] },
+    { "name": "João Mário", "country": "portekiz", "teams": ["sporting", "inter", "benfica", "beşiktaş"] },
+    { "name": "Cher Ndour", "country": "italya", "teams": ["benfica", "psg", "beşiktaş"] },
+    { "name": "Felix Uduokhai", "country": "almanya", "teams": ["beşiktaş"] },
+    { "name": "Gabriel Paulista", "country": "brezilya", "teams": ["arsenal","atletico madrid", "beşiktaş"] },
+    { "name": "Simon Banza", "country": "demokratik kongo cumhuriyeti", "teams": ["trabzonspor"] },
+    { "name": "Stefan Savić", "country": "karadağ", "teams": ["manchester city","atletico madrid", "trabzonspor"] },
+    { "name": "Muhammed Cham", "country": "avusturya", "teams": ["trabzonspor"] },
+    
 ]
