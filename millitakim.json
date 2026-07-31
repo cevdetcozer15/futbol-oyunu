@@ -174,7 +174,6 @@
     { "name": "Fred", "country": "brezilya", "teams": ["shakhtar donetsk", "manchester united", "fenerbahçe"] },
     { "name": "Ferdi Kadıoğlu", "country": "türkiye", "teams": ["nec nijmegen", "fenerbahçe", "brighton"] },
     { "name": "Allan Saint-Maximin", "country": "fransa", "teams": ["newcastle united", "al ahli", "fenerbahçe"] },
-    { "name": "Sofyan Amrabat", "country": "fas", "teams": ["manchester united", "fenerbahçe"] },
     { "name": "Dominik Livaković", "country": "hırvatistan", "teams": ["dinamo zagreb", "fenerbahçe"] },
     { "name": "Çağlar Söyüncü", "country": "türkiye", "teams": ["freiburg", "leicester city", "atletico madrid", "fenerbahçe"] },
     { "name": "Youssef En-Nesyri", "country": "fas", "teams": ["sevilla", "fenerbahçe"] },
@@ -768,6 +767,13 @@
     { "name": "Felix Uduokhai", "country": "almanya", "teams": ["beşiktaş"] },
     { "name": "Gabriel Paulista", "country": "brezilya", "teams": ["arsenal","atletico madrid", "beşiktaş"] },
     { "name": "Simon Banza", "country": "demokratik kongo cumhuriyeti", "teams": ["trabzonspor"] },
-    { "name": "Stefan Savić", "country": "karadağ", "teams": ["manchester city","atletico madrid", "trabzonspor"] }
+    { "name": "Stefan Savić", "country": "karadağ", "teams": ["manchester city","atletico madrid", "trabzonspor"] },
+    { "name": "Noa Lang", "country": "hollanda", "teams": ["napoli", "galatasaray","psv"] },
+    { "name": "Lautaro Martínez", "country": "arjantin", "teams": ["inter"] },
+    { "name": "Mateo Kovacić", "country": "hırvatistan", "teams": ["inter", "real madrid", "chelsea", "manchester city"] },
+    { "name": "Benjamin Pavard", "country": "fransa", "teams": ["bayern münih", "inter"] },
+    { "name": "Lee Kang-in", "country": "güney kore", "teams": ["psg"] },
+    { "name": "Bryan Mbeumo", "country": "kamerun", "teams": ["manchester united", "brentford"] },
+    { "name": "Sergej Milinković-Savić", "country": "sırbistan", "teams": "lazio"] },
     
 ]
