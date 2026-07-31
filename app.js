@@ -1,13 +1,38 @@
 const socket = io();
 
-// YENİ: Anlık bağlantı kopmalarına karşı odaya geri dönme güvencesi
 socket.on('connect', () => {
     if (myRoomCode) {
         socket.emit('rejoinRoom', myRoomCode);
     }
 });
 
-// --- SES TANIMA ---
+// --- YENİ: GEÇİŞ EKRANI (TRANSITION OVERLAY) ---
+const transitionOverlay = document.createElement('div');
+transitionOverlay.id = "transition-overlay";
+transitionOverlay.style.position = "fixed";
+transitionOverlay.style.top = "0";
+transitionOverlay.style.left = "0";
+transitionOverlay.style.width = "100vw";
+transitionOverlay.style.height = "100vh";
+transitionOverlay.style.backgroundColor = "rgba(10, 14, 23, 0.95)"; 
+transitionOverlay.style.color = "#f1c40f"; 
+transitionOverlay.style.display = "flex";
+transitionOverlay.style.flexDirection = "column";
+transitionOverlay.style.justifyContent = "center";
+transitionOverlay.style.alignItems = "center";
+transitionOverlay.style.fontSize = "28px";
+transitionOverlay.style.fontWeight = "bold";
+transitionOverlay.style.zIndex = "9999";
+transitionOverlay.style.opacity = "0";
+transitionOverlay.style.pointerEvents = "none";
+transitionOverlay.style.transition = "opacity 0.4s ease-in-out";
+transitionOverlay.innerHTML = `<div style="text-align: center; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);">🚀<br>YENİ OYUN<br>BAŞLIYOR...</div>`;
+document.body.appendChild(transitionOverlay);
+
+function showTransition() { transitionOverlay.style.opacity = "1"; transitionOverlay.style.pointerEvents = "all"; }
+function hideTransition() { transitionOverlay.style.opacity = "0"; transitionOverlay.style.pointerEvents = "none"; }
+// ----------------------------------------------
+
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
@@ -147,6 +172,8 @@ socket.on('updateLeaderboard', (topScores) => {
 });
 
 socket.on('requestTeamSelection', (data) => {
+    hideTransition(); // YENİ: Takım seçme ekranı geldiğinde geçişi kapatır
+
     myPlayerIndex = data.playerIndex; 
     isSinglePlayerMode = data.isSinglePlayer;
 
@@ -217,6 +244,8 @@ socket.on('invalidCustomTeams', (msg) => {
 });
 
 socket.on('newRound', (teams) => {
+    hideTransition(); // YENİ: Yeni tur kutuları geldiğinde geçiş ekranını gizler
+
     teamSelectionArea.style.display = 'none'; matchTeamsContainer.style.display = 'flex'; actionArea.style.display = 'none';
     if (!isSinglePlayerMode) { timerDisplay.style.display = 'none'; clearInterval(countdownInterval); }
     
@@ -280,7 +309,6 @@ passButton.addEventListener('click', () => {
     passButton.disabled = true; 
     passButton.innerText = isSinglePlayerMode ? 'Geçiliyor...' : 'Rakip Bekleniyor... ⏳'; 
     
-    // YENİ: Kilitlenme Karşıtı Sigorta (Fail-Safe) - 3 Saniye sonra sunucu cevap vermezse butonu geri açar
     setTimeout(() => {
         if (passButton.disabled && isRoundActive) {
             passButton.disabled = false;
@@ -344,4 +372,16 @@ socket.on('playAgainReady', () => {
     document.getElementById('p2-score').innerText = "0"; 
 });
 
-document.getElementById('exit-btn').addEventListener('click', () => { window.location.reload(); }); document.getElementById('waiting-exit-btn').addEventListener('click', () => { window.location.reload(); }); document.getElementById('new-game-btn').addEventListener('click', () => { socket.emit('playAgain', myRoomCode); });
+document.getElementById('exit-btn').addEventListener('click', () => { window.location.reload(); }); 
+document.getElementById('waiting-exit-btn').addEventListener('click', () => { window.location.reload(); }); 
+
+// YENİ: YENİ OYUN BUTONU GEÇİŞ EKRANI ENTEGRASYONU
+document.getElementById('new-game-btn').addEventListener('click', () => { 
+    showTransition(); // Ekranı karartıp animasyonu başlatır
+    
+    // Geçiş ekranının kullanıcı tarafından fark edilebilmesi için 
+    // sunucuya komutu 800 milisaniye gecikmeli gönderiyoruz.
+    setTimeout(() => {
+        socket.emit('playAgain', myRoomCode); 
+    }, 800);
+});
