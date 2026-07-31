@@ -348,7 +348,7 @@
     { "name": "Youssouf Fofana", "country": "fransa", "teams": ["strasbourg", "monaco", "ac milan"] },
     { "name": "Tijjani Reijnders", "country": "hollanda", "teams": ["manchester city", "ac milan"] },
     { "name": "Dejan Kulusevski", "country": "isveç", "teams": ["atalanta", "parma", "juventus", "tottenham"] },
-    { "name": "Cristian Romero", "country": "arjantin", "teams": ["belgrano", "genoa", "atalanta", "tottenham"] },
+    { "name": "Cristian Romero", "country": "arjantin", "teams": ["tottenham"] },
     { "name": "Guglielmo Vicario", "country": "italya", "teams": ["tottenham"] },
     { "name": "Piotr Zieliński", "country": "polonya", "teams": ["napoli", "inter"] },
     { "name": "Mehdi Taremi", "country": "iran", "teams": ["porto", "inter"] },
