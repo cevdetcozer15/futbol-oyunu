@@ -1,43 +1,12 @@
 const socket = io();
 
-// --- MOBİL ARKA PLAN / UYKU MODU (VISIBILITY) ÇÖZÜMÜ ---
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-        // 1. Sekmeye/Oyuna geri dönüldü! Soket uykudaysa uyandır.
-        if (!socket.connected) {
-            socket.connect();
-        }
-        
-        // 2. Eğer bir odadaysan, sunucuya gizlice "Ben ölmedim, buradayım" sinyali gönder
-        if (myRoomCode) {
-            socket.emit('rejoinRoom', myRoomCode);
-        }
-        
-        // 3. Pas butonu WhatsApp'a geçerken "Geçiliyor..." veya "Bekleniyor..." durumunda donduysa kilidi kır
-        if (passButton && passButton.disabled && isRoundActive) {
-            passButton.disabled = false;
-            passButton.innerText = 'Pas Geç ⏭️';
-        }
-        
-        // 4. Ekranı kaplayan geçiş animasyonu takılı kaldıysa onu yok et
-        if (typeof hideTransition === "function") {
-            hideTransition();
-        }
-    }
-});
-// -------------------------------------------------------
-
 socket.on('connect', () => {
-// ... (Kodun geri kalanı buradan aynen devam ediyor) ...
-const socket = io();
-
-socket.on('connect', () => {
-    if (myRoomCode) {
+    if (typeof myRoomCode !== 'undefined' && myRoomCode) {
         socket.emit('rejoinRoom', myRoomCode);
     }
 });
 
-// --- YENİ: GEÇİŞ EKRANI (TRANSITION OVERLAY) ---
+// --- GEÇİŞ EKRANI (TRANSITION OVERLAY) ---
 const transitionOverlay = document.createElement('div');
 transitionOverlay.id = "transition-overlay";
 transitionOverlay.style.position = "fixed";
@@ -64,6 +33,7 @@ function showTransition() { transitionOverlay.style.opacity = "1"; transitionOve
 function hideTransition() { transitionOverlay.style.opacity = "0"; transitionOverlay.style.pointerEvents = "none"; }
 // ----------------------------------------------
 
+// --- SES TANIMA ---
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
@@ -102,6 +72,7 @@ document.getElementById('mic-b').addEventListener('click', () => listenForTeam('
 
 const countryFlags = { "arjantin": "ar", "belçika": "be", "uruguay": "uy", "italya": "it", "bosna hersek": "ba", "sırbistan": "rs", "ingiltere": "gb-eng", "mısır": "eg", "norveç": "no", "brezilya": "br", "polonya": "pl", "fransa": "fr", "portekiz": "pt", "gürcistan": "ge", "isveç": "se", "şili": "cl", "türkiye": "tr", "ispanya": "es", "hollanda": "nl", "fildişi sahili": "ci", "kolombiya": "co", "almanya": "de", "çekya": "cz", "cezayir": "dz", "fas": "ma", "hırvatistan": "hr", "senegal": "sn", "galler": "gb-wls", "kamerun": "cm", "nijerya": "ng", "güney kore": "kr", "macaristan": "hu", "ekvador": "ec", "gabon": "ga", "isviçre": "ch", "danimarka": "dk", "abd": "us", "slovenya": "si", "slovakya": "sk", "iskoçya": "gb-sct", "surinam": "sr", "iran": "ir", "jamaika": "jm", "burkina faso": "bf", "japonya": "jp", "kosova": "xk", "togo": "tg", "yeşil burun adaları": "cv", "yunanistan": "gr", "arnavutluk": "al", "libya": "ly", "demokratik kongo cumhuriyeti": "cd", "karadağ": "me", "avusturya": "at", "ukrayna": "ua", "gine": "gn", "kanada": "ca", "kuzey makedonya": "mk", "romanya": "ro" };
 
+// --- ARAYÜZ DEĞİŞKENLERİ ---
 const screens = { lobby: document.getElementById('lobby'), waiting: document.getElementById('waiting'), game: document.getElementById('game') };
 const statusMsg = document.getElementById('status-message');
 const teamABox = document.getElementById('teamA-box');
@@ -119,11 +90,32 @@ const customTeamError = document.getElementById('custom-team-error');
 const playStyleSelection = document.getElementById('play-style-selection');
 const modeSelection = document.getElementById('mode-selection');
 
+// --- OYUN DURUM DEĞİŞKENLERİ ---
 let myRoomCode = ""; let isRoundActive = false; let countdownInterval;
 let isSinglePlayerMode = false; let isFirstRoundSP = true; let spTimerLeft = 120; let spGlobalInterval;
 let pendingTarget = ""; let myPlayerIndex = 0; 
 let selectedPlayStyle = ""; 
 let roundStartInterval; 
+
+// --- MOBİL ARKA PLAN / UYKU MODU ÇÖZÜMÜ (DOĞRU YERİ BURASI) ---
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        if (!socket.connected) {
+            socket.connect();
+        }
+        if (myRoomCode) {
+            socket.emit('rejoinRoom', myRoomCode);
+        }
+        if (passButton && passButton.disabled && isRoundActive) {
+            passButton.disabled = false;
+            passButton.innerText = 'Pas Geç ⏭️';
+        }
+        if (typeof hideTransition === "function") {
+            hideTransition();
+        }
+    }
+});
+// ---------------------------------------------------------------
 
 function showPlayStyleSelection(target) { 
     pendingTarget = target; 
@@ -203,7 +195,7 @@ socket.on('updateLeaderboard', (topScores) => {
 });
 
 socket.on('requestTeamSelection', (data) => {
-    hideTransition(); // YENİ: Takım seçme ekranı geldiğinde geçişi kapatır
+    hideTransition();
 
     myPlayerIndex = data.playerIndex; 
     isSinglePlayerMode = data.isSinglePlayer;
@@ -275,7 +267,7 @@ socket.on('invalidCustomTeams', (msg) => {
 });
 
 socket.on('newRound', (teams) => {
-    hideTransition(); // YENİ: Yeni tur kutuları geldiğinde geçiş ekranını gizler
+    hideTransition(); 
 
     teamSelectionArea.style.display = 'none'; matchTeamsContainer.style.display = 'flex'; actionArea.style.display = 'none';
     if (!isSinglePlayerMode) { timerDisplay.style.display = 'none'; clearInterval(countdownInterval); }
@@ -406,12 +398,8 @@ socket.on('playAgainReady', () => {
 document.getElementById('exit-btn').addEventListener('click', () => { window.location.reload(); }); 
 document.getElementById('waiting-exit-btn').addEventListener('click', () => { window.location.reload(); }); 
 
-// YENİ: YENİ OYUN BUTONU GEÇİŞ EKRANI ENTEGRASYONU
 document.getElementById('new-game-btn').addEventListener('click', () => { 
-    showTransition(); // Ekranı karartıp animasyonu başlatır
-    
-    // Geçiş ekranının kullanıcı tarafından fark edilebilmesi için 
-    // sunucuya komutu 800 milisaniye gecikmeli gönderiyoruz.
+    showTransition(); 
     setTimeout(() => {
         socket.emit('playAgain', myRoomCode); 
     }, 800);
