@@ -406,5 +406,5 @@
     { "name": "Serdar Saatçı", "country": "türkiye", "teams": ["beşiktaş", "braga", "trabzonspor"] },
     { "name": "Pedro Malheiro", "country": "portekiz", "teams": ["boavista", "trabzonspor"] },
     { "name": "Umut Güneş", "country": "türkiye", "teams": ["stuttgart", "alanyaspor", "trabzonspor"] },
-    { "name": "Rayyan Baniya", "country": "türkiye", "teams": ["karagümrük", "trabzonspor", "palermo"] },
+    { "name": "Rayyan Baniya", "country": "türkiye", "teams": ["karagümrük", "trabzonspor", "palermo"] }
 ]
