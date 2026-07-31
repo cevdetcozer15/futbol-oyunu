@@ -772,6 +772,6 @@
     { "name": "Gabriel Paulista", "country": "brezilya", "teams": ["arsenal","atletico madrid", "beşiktaş"] },
     { "name": "Simon Banza", "country": "demokratik kongo cumhuriyeti", "teams": ["trabzonspor"] },
     { "name": "Stefan Savić", "country": "karadağ", "teams": ["manchester city","atletico madrid", "trabzonspor"] },
-    { "name": "Muhammed Cham", "country": "avusturya", "teams": ["trabzonspor"] },
+    { "name": "Muhammed Cham", "country": "avusturya", "teams": ["trabzonspor"] }
     
 ]
