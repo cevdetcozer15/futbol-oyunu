@@ -11,22 +11,27 @@ app.use(express.static(__dirname));
 
 const BIG_FOUR = ["galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor"];
 
-// --- ÜLKE/TAKIM SÖZLÜĞÜ (Aynı ülke eşleşmelerini engellemek için) ---
+function cleanText(text) {
+    if(!text) return "";
+    return text.toLowerCase().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// --- ÜLKE/TAKIM SÖZLÜĞÜ ---
 const teamCountries = {
     // TÜRKİYE
-    "galatasaray": "türkiye", "fenerbahçe": "türkiye", "beşiktaş": "türkiye", "trabzonspor": "türkiye", "başakşehir": "türkiye", "kasımpaşa": "türkiye", "konyaspor": "türkiye", "antalyaspor": "türkiye", "göztepe": "türkiye", "rizespor": "türkiye", "kayserispor": "türkiye", "sivasspor": "türkiye", "adana demirspor": "türkiye", "karagümrük": "türkiye", "ankaragücü": "türkiye", "samsunspor": "türkiye", "alanyaspor": "türkiye", "bursaspor": "türkiye", "gençlerbirliği": "türkiye", "eskişehirspor": "türkiye", "gaziantepspor": "türkiye", "gaziantep fk": "türkiye", "eyüpspor": "türkiye", "akhisarspor": "türkiye", "denizlispor": "türkiye", "manisaspor": "türkiye", "kocaelispor": "türkiye", "istanbulspor": "türkiye", "pendikspor": "türkiye", "bodrum fk": "türkiye",
+    "galatasaray": "türkiye", "fenerbahçe": "türkiye", "beşiktaş": "türkiye", "trabzonspor": "türkiye", "başakşehir": "türkiye", "kasımpaşa": "türkiye", "konyaspor": "türkiye", "antalyaspor": "türkiye", "göztepe": "türkiye", "rizespor": "türkiye", "kayserispor": "türkiye", "sivasspor": "türkiye", "adana demirspor": "türkiye", "karagümrük": "türkiye", "ankaragücü": "türkiye", "samsunspor": "türkiye", "alanyaspor": "türkiye", "bursaspor": "türkiye", "gençlerbirliği": "türkiye", "eskişehirspor": "türkiye", "gaziantepspor": "türkiye", "gaziantep fk": "türkiye", "eyüpspor": "türkiye", "akhisarspor": "türkiye", "denizlispor": "türkiye", "manisaspor": "türkiye", "kocaelispor": "türkiye", "istanbulspor": "türkiye", "pendikspor": "türkiye", "bodrum fk": "türkiye", "çaykur rizespor": "türkiye", "rize": "türkiye",
     // İNGİLTERE
-    "arsenal": "ingiltere", "manchester city": "ingiltere", "manchester united": "ingiltere", "chelsea": "ingiltere", "liverpool": "ingiltere", "aston villa": "ingiltere", "tottenham": "ingiltere", "newcastle united": "ingiltere", "west ham": "ingiltere", "everton": "ingiltere", "brighton": "ingiltere", "crystal palace": "ingiltere", "fulham": "ingiltere", "leicester city": "ingiltere", "nottingham forest": "ingiltere", "wolves": "ingiltere", "leeds united": "ingiltere", "bournemouth": "ingiltere", "brentford": "ingiltere", "southampton": "ingiltere", "sheffield united": "ingiltere", "hull city": "ingiltere", "sunderland": "ingiltere", "blackburn": "ingiltere",
+    "arsenal": "ingiltere", "manchester city": "ingiltere", "manchester united": "ingiltere", "chelsea": "ingiltere", "liverpool": "ingiltere", "aston villa": "ingiltere", "tottenham": "ingiltere", "newcastle united": "ingiltere", "west ham": "ingiltere", "everton": "ingiltere", "brighton": "ingiltere", "crystal palace": "ingiltere", "fulham": "ingiltere", "leicester city": "ingiltere", "nottingham forest": "ingiltere", "wolves": "ingiltere", "leeds united": "ingiltere", "bournemouth": "ingiltere", "brentford": "ingiltere", "southampton": "ingiltere", "sheffield united": "ingiltere", "hull city": "ingiltere", "sunderland": "ingiltere", "blackburn": "ingiltere", "reading": "ingiltere", "derby": "ingiltere", "preston": "ingiltere", "middlesbrough": "ingiltere",
     // İSPANYA
     "real madrid": "ispanya", "barcelona": "ispanya", "atletico madrid": "ispanya", "sevilla": "ispanya", "villarreal": "ispanya", "valencia": "ispanya", "real betis": "ispanya", "athletic bilbao": "ispanya", "celta vigo": "ispanya", "getafe": "ispanya", "girona": "ispanya", "osasuna": "ispanya", "mallorca": "ispanya", "real sociedad": "ispanya", "malaga": "ispanya", "espanyol": "ispanya", "alaves": "ispanya", "deportivo la coruna": "ispanya", "granada": "ispanya", "levante": "ispanya", "cadiz": "ispanya",
     // İTALYA
     "inter": "italya", "ac milan": "italya", "juventus": "italya", "roma": "italya", "napoli": "italya", "lazio": "italya", "atalanta": "italya", "fiorentina": "italya", "torino": "italya", "bologna": "italya", "genoa": "italya", "parma": "italya", "sampdoria": "italya", "cagliari": "italya", "empoli": "italya", "udinese": "italya", "sassuolo": "italya", "venezia": "italya", "como": "italya", "hellas verona": "italya", "reggina": "italya",
     // ALMANYA
-    "bayern münih": "almanya", "dortmund": "almanya", "bayer leverkusen": "almanya", "rb leipzig": "almanya", "stuttgart": "almanya", "eintracht frankfurt": "almanya", "wolfsburg": "almanya", "schalke": "almanya", "werder bremen": "almanya", "freiburg": "almanya", "union berlin": "almanya", "köln": "almanya", "hoffenheim": "almanya", "hamburg": "almanya", "mainz": "almanya", "hannover": "almanya", "augsburg": "almanya", "1860 munich": "almanya", "bochum": "almanya", "hertha berlin": "almanya",
+    "bayern münih": "almanya", "dortmund": "almanya", "bayer leverkusen": "almanya", "rb leipzig": "almanya", "stuttgart": "almanya", "eintracht frankfurt": "almanya", "wolfsburg": "almanya", "schalke": "almanya", "werder bremen": "almanya", "freiburg": "almanya", "union berlin": "almanya", "köln": "almanya", "hoffenheim": "almanya", "hamburg": "almanya", "mainz": "almanya", "hannover": "almanya", "augsburg": "almanya", "1860 munich": "almanya", "bochum": "almanya", "hertha berlin": "almanya", "st. pauli": "almanya",
     // FRANSA
     "psg": "fransa", "marseille": "fransa", "lyon": "fransa", "monaco": "fransa", "lille": "fransa", "rennes": "fransa", "nice": "fransa", "lens": "fransa", "bordeaux": "fransa", "toulouse": "fransa", "strasbourg": "fransa", "nantes": "fransa", "angers": "fransa", "clermont": "fransa", "metz": "fransa", "saint-etienne": "fransa", "amiens": "fransa", "bastia": "fransa", "le havre": "fransa", "troyes": "fransa", "guingamp": "fransa",
     // HOLLANDA
-    "ajax": "hollanda", "psv": "hollanda", "feyenoord": "hollanda", "az alkmaar": "hollanda", "twente": "hollanda", "heerenveen": "hollanda", "nec nijmegen": "hollanda", "sparta rotterdam": "hollanda", "vitesse": "hollanda",
+    "ajax": "hollanda", "psv": "hollanda", "feyenoord": "hollanda", "az alkmaar": "hollanda", "twente": "hollanda", "heerenveen": "hollanda", "nec nijmegen": "hollanda", "sparta rotterdam": "hollanda", "vitesse": "hollanda", "groningen": "hollanda",
     // PORTEKİZ
     "porto": "portekiz", "benfica": "portekiz", "sporting": "portekiz", "braga": "portekiz", "vitoria guimaraes": "portekiz", "gil vicente": "portekiz", "famalicao": "portekiz", "rio ave": "portekiz", "boavista": "portekiz",
     // DİĞER COĞRAFYALAR
@@ -36,13 +41,21 @@ const teamCountries = {
     "flamengo": "brezilya", "palmeiras": "brezilya", "sao paulo": "brezilya", "santos": "brezilya", "corinthians": "brezilya", "atletico mineiro": "brezilya", "bahia": "brezilya", "cruzeiro": "brezilya", "gremio": "brezilya", "vasco da gama": "brezilya", "fluminense": "brezilya",
     "shakhtar donetsk": "ukrayna", "dynamo kyiv": "ukrayna", 
     "dinamo zagreb": "hırvatistan", "osijek": "hırvatistan",
-    "olympiacos": "yunanistan", "panathinaikos": "yunanistan", "paok": "yunanistan", "aek": "yunanistan",
-    "salzburg": "avusturya", "rapid wien": "avusturya", "austria wien": "avusturya",
+    "olympiacos": "yunanistan", "panathinaikos": "yunanistan", "paok": "yunanistan", "aek": "yunanistan", "omonia": "yunanistan",
+    "salzburg": "avusturya", "rapid wien": "avusturya", "austria wien": "avusturya", "lask": "avusturya",
     "zenit": "rusya", "cska moscow": "rusya", "spartak moscow": "rusya", "lokomotiv moscow": "rusya", "dynamo moscow": "rusya",
     "inter miami": "abd", "la galaxy": "abd",
     "basel": "isviçre",
-    "partizan": "sırbistan"
+    "partizan": "sırbistan",
+    "copenhagen": "danimarka", "nordsjaelland": "danimarka", "midtylland": "danimarka",
+    "bodo/glimt": "norveç", "rosenborg": "norveç", "molde": "norveç", "lyn": "norveç"
 };
+
+// ÇÖZÜM: Türkçe karakter sorununu aşmak için sözlüğü sunucu başlarken tamamen cleanText formatına çeviriyoruz.
+const cleanTeamCountries = {};
+for (const [key, value] of Object.entries(teamCountries)) {
+    cleanTeamCountries[cleanText(key)] = cleanText(value);
+}
 
 // Hata toleranslı Veritabanı Okuyucu
 function getDB(mode) {
@@ -75,11 +88,6 @@ function updateLeaderboard(playerName, score) {
     topScores = topScores.slice(0, 5);
     fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(topScores));
     io.emit('updateLeaderboard', topScores);
-}
-
-function cleanText(text) {
-    if(!text) return "";
-    return text.toLowerCase().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 const WIN_SCORE = 5; const rooms = {}; 
@@ -148,15 +156,15 @@ function startRound(roomCode) {
         let attempts = 0;
         let validTeamFound = false;
 
-        // Eşleşme Mantığı: Seçilen takımın ülkesi oyuncunun milli takımıyla aynıysa tekrar zarat!
-        while (!validTeamFound && attempts < 50) {
+        while (!validTeamFound && attempts < 100) {
             randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
             const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
             
-            const teamCountry = teamCountries[cleanText(randomTeam)];
+            // Temizlenmiş takım adını temizlenmiş sözlükte arıyoruz
+            const teamCountry = cleanTeamCountries[cleanText(randomTeam)];
             const playerCountry = cleanText(randomPlayer.country);
 
-            // Eğer takım ülkesi ve oyuncu ülkesi ÇAKIŞMIYORSA onay ver
+            // Eğer takım ülkesi sözlükte yoksa VEYA sözlükteki ülke, oyuncunun ülkesine EŞİT DEĞİLSE onay ver
             if (!teamCountry || teamCountry !== playerCountry) {
                 room.currentTeamA = randomTeam; 
                 room.currentTeamB = randomPlayer.country;
@@ -165,7 +173,6 @@ function startRound(roomCode) {
             attempts++;
         }
 
-        // Ola ki 50 denemede bulamazsa (imkansıza yakın) fallback mekanizması
         if (!validTeamFound) {
             room.currentTeamA = randomPlayer.teams[0];
             room.currentTeamB = randomPlayer.country;
