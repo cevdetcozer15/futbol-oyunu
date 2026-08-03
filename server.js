@@ -14,13 +14,13 @@ const BIG_FOUR = ["galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor"];
 
 // ZORLUK FİLTRESİ İÇİN ELİT TAKIMLAR LİSTESİ
 const ELITE_TEAMS = [
-    "galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor",
-    "real madrid", "barcelona", "atletico madrid", "sevilla",
-    "arsenal", "manchester city", "manchester united", "chelsea", "liverpool", "tottenham",
-    "juventus", "ac milan", "inter", "roma", "napoli",
-    "bayern münih", "dortmund", "bayer leverkusen", "rb leipzig",
-    "psg", "lyon", "marseille", "monaco",
-    "ajax", "psv", "porto", "benfica", "sporting"
+    "galatasaray", "fenerbahçe", "beşiktaş",
+    "real madrid", "barcelona", "atletico madrid",
+    "arsenal", "manchester city", "manchester united", "chelsea", "liverpool",
+    "juventus","inter", "roma", "napoli",
+    "bayern münih", "dortmund", "bayer leverkusen",
+    "psg",
+    "ajax","porto"
 ];
 
 function cleanText(text) {
