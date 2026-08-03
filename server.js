@@ -17,10 +17,9 @@ const ELITE_TEAMS = [
     "galatasaray", "fenerbahçe", "beşiktaş",
     "real madrid", "barcelona", "atletico madrid",
     "arsenal", "manchester city", "manchester united", "chelsea", "liverpool",
-    "juventus","inter", "roma", "napoli",
-    "bayern münih", "dortmund", "bayer leverkusen",
-    "psg",
-    "ajax","porto"
+    "juventus","inter",
+    "bayern münih", "dortmund",
+    "psg", "sporting"
 ];
 
 function cleanText(text) {
