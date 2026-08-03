@@ -11,7 +11,40 @@ app.use(express.static(__dirname));
 
 const BIG_FOUR = ["galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor"];
 
-// YENİ: Hata toleranslı (Resilient) Veritabanı Okuyucu
+// --- ÜLKE/TAKIM SÖZLÜĞÜ (Aynı ülke eşleşmelerini engellemek için) ---
+const teamCountries = {
+    // TÜRKİYE
+    "galatasaray": "türkiye", "fenerbahçe": "türkiye", "beşiktaş": "türkiye", "trabzonspor": "türkiye", "başakşehir": "türkiye", "kasımpaşa": "türkiye", "konyaspor": "türkiye", "antalyaspor": "türkiye", "göztepe": "türkiye", "rizespor": "türkiye", "kayserispor": "türkiye", "sivasspor": "türkiye", "adana demirspor": "türkiye", "karagümrük": "türkiye", "ankaragücü": "türkiye", "samsunspor": "türkiye", "alanyaspor": "türkiye", "bursaspor": "türkiye", "gençlerbirliği": "türkiye", "eskişehirspor": "türkiye", "gaziantepspor": "türkiye", "gaziantep fk": "türkiye", "eyüpspor": "türkiye", "akhisarspor": "türkiye", "denizlispor": "türkiye", "manisaspor": "türkiye", "kocaelispor": "türkiye", "istanbulspor": "türkiye", "pendikspor": "türkiye", "bodrum fk": "türkiye",
+    // İNGİLTERE
+    "arsenal": "ingiltere", "manchester city": "ingiltere", "manchester united": "ingiltere", "chelsea": "ingiltere", "liverpool": "ingiltere", "aston villa": "ingiltere", "tottenham": "ingiltere", "newcastle united": "ingiltere", "west ham": "ingiltere", "everton": "ingiltere", "brighton": "ingiltere", "crystal palace": "ingiltere", "fulham": "ingiltere", "leicester city": "ingiltere", "nottingham forest": "ingiltere", "wolves": "ingiltere", "leeds united": "ingiltere", "bournemouth": "ingiltere", "brentford": "ingiltere", "southampton": "ingiltere", "sheffield united": "ingiltere", "hull city": "ingiltere", "sunderland": "ingiltere", "blackburn": "ingiltere",
+    // İSPANYA
+    "real madrid": "ispanya", "barcelona": "ispanya", "atletico madrid": "ispanya", "sevilla": "ispanya", "villarreal": "ispanya", "valencia": "ispanya", "real betis": "ispanya", "athletic bilbao": "ispanya", "celta vigo": "ispanya", "getafe": "ispanya", "girona": "ispanya", "osasuna": "ispanya", "mallorca": "ispanya", "real sociedad": "ispanya", "malaga": "ispanya", "espanyol": "ispanya", "alaves": "ispanya", "deportivo la coruna": "ispanya", "granada": "ispanya", "levante": "ispanya", "cadiz": "ispanya",
+    // İTALYA
+    "inter": "italya", "ac milan": "italya", "juventus": "italya", "roma": "italya", "napoli": "italya", "lazio": "italya", "atalanta": "italya", "fiorentina": "italya", "torino": "italya", "bologna": "italya", "genoa": "italya", "parma": "italya", "sampdoria": "italya", "cagliari": "italya", "empoli": "italya", "udinese": "italya", "sassuolo": "italya", "venezia": "italya", "como": "italya", "hellas verona": "italya", "reggina": "italya",
+    // ALMANYA
+    "bayern münih": "almanya", "dortmund": "almanya", "bayer leverkusen": "almanya", "rb leipzig": "almanya", "stuttgart": "almanya", "eintracht frankfurt": "almanya", "wolfsburg": "almanya", "schalke": "almanya", "werder bremen": "almanya", "freiburg": "almanya", "union berlin": "almanya", "köln": "almanya", "hoffenheim": "almanya", "hamburg": "almanya", "mainz": "almanya", "hannover": "almanya", "augsburg": "almanya", "1860 munich": "almanya", "bochum": "almanya", "hertha berlin": "almanya",
+    // FRANSA
+    "psg": "fransa", "marseille": "fransa", "lyon": "fransa", "monaco": "fransa", "lille": "fransa", "rennes": "fransa", "nice": "fransa", "lens": "fransa", "bordeaux": "fransa", "toulouse": "fransa", "strasbourg": "fransa", "nantes": "fransa", "angers": "fransa", "clermont": "fransa", "metz": "fransa", "saint-etienne": "fransa", "amiens": "fransa", "bastia": "fransa", "le havre": "fransa", "troyes": "fransa", "guingamp": "fransa",
+    // HOLLANDA
+    "ajax": "hollanda", "psv": "hollanda", "feyenoord": "hollanda", "az alkmaar": "hollanda", "twente": "hollanda", "heerenveen": "hollanda", "nec nijmegen": "hollanda", "sparta rotterdam": "hollanda", "vitesse": "hollanda",
+    // PORTEKİZ
+    "porto": "portekiz", "benfica": "portekiz", "sporting": "portekiz", "braga": "portekiz", "vitoria guimaraes": "portekiz", "gil vicente": "portekiz", "famalicao": "portekiz", "rio ave": "portekiz", "boavista": "portekiz",
+    // DİĞER COĞRAFYALAR
+    "club brugge": "belçika", "anderlecht": "belçika", "genk": "belçika", "standard liege": "belçika", "union sg": "belçika", "antwerp": "belçika", "charleroi": "belçika",
+    "celtic": "iskoçya", "rangers": "iskoçya", "dundee united": "iskoçya",
+    "boca juniors": "arjantin", "river plate": "arjantin", "tigre": "arjantin", "belgrano": "arjantin", "san lorenzo": "arjantin",
+    "flamengo": "brezilya", "palmeiras": "brezilya", "sao paulo": "brezilya", "santos": "brezilya", "corinthians": "brezilya", "atletico mineiro": "brezilya", "bahia": "brezilya", "cruzeiro": "brezilya", "gremio": "brezilya", "vasco da gama": "brezilya", "fluminense": "brezilya",
+    "shakhtar donetsk": "ukrayna", "dynamo kyiv": "ukrayna", 
+    "dinamo zagreb": "hırvatistan", "osijek": "hırvatistan",
+    "olympiacos": "yunanistan", "panathinaikos": "yunanistan", "paok": "yunanistan", "aek": "yunanistan",
+    "salzburg": "avusturya", "rapid wien": "avusturya", "austria wien": "avusturya",
+    "zenit": "rusya", "cska moscow": "rusya", "spartak moscow": "rusya", "lokomotiv moscow": "rusya", "dynamo moscow": "rusya",
+    "inter miami": "abd", "la galaxy": "abd",
+    "basel": "isviçre",
+    "partizan": "sırbistan"
+};
+
+// Hata toleranslı Veritabanı Okuyucu
 function getDB(mode) {
     let classic = [], superlig = [], milli = [];
     
@@ -79,7 +112,6 @@ function startRound(roomCode) {
 
     const activeDB = getDB(room.gameMode);
     
-    // YENİ: JSON bozuksa oyunu dondurmak yerine ekrana uyarı basar
     if (activeDB.length === 0) {
         room.correctAnswer = "JSON DOSYASI BOZUK!";
         io.to(roomCode).emit('timeUp', { correctPlayer: room.correctAnswer });
@@ -113,10 +145,32 @@ function startRound(roomCode) {
         }
 
     } else if (room.gameMode === 'country') {
-        randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
-        const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
-        room.currentTeamA = randomTeam; 
-        room.currentTeamB = randomPlayer.country;
+        let attempts = 0;
+        let validTeamFound = false;
+
+        // Eşleşme Mantığı: Seçilen takımın ülkesi oyuncunun milli takımıyla aynıysa tekrar zarat!
+        while (!validTeamFound && attempts < 50) {
+            randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
+            const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
+            
+            const teamCountry = teamCountries[cleanText(randomTeam)];
+            const playerCountry = cleanText(randomPlayer.country);
+
+            // Eğer takım ülkesi ve oyuncu ülkesi ÇAKIŞMIYORSA onay ver
+            if (!teamCountry || teamCountry !== playerCountry) {
+                room.currentTeamA = randomTeam; 
+                room.currentTeamB = randomPlayer.country;
+                validTeamFound = true;
+            }
+            attempts++;
+        }
+
+        // Ola ki 50 denemede bulamazsa (imkansıza yakın) fallback mekanizması
+        if (!validTeamFound) {
+            room.currentTeamA = randomPlayer.teams[0];
+            room.currentTeamB = randomPlayer.country;
+        }
+        
     } else {
         randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
         const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
@@ -142,7 +196,6 @@ function startRound(roomCode) {
 io.on('connection', (socket) => {
     socket.emit('updateLeaderboard', topScores);
 
-    // YENİ: Anlık kopmalara karşı odaya gizlice tekrar sokan sistem
     socket.on('rejoinRoom', (roomCode) => {
         if (rooms[roomCode]) socket.join(roomCode);
     });
