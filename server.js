@@ -12,7 +12,7 @@ app.use(express.static(__dirname));
 
 const BIG_FOUR = ["galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor"];
 
-// YENİ: ZORLUK FİLTRESİ İÇİN ELİT TAKIMLAR LİSTESİ
+// ZORLUK FİLTRESİ İÇİN ELİT TAKIMLAR LİSTESİ
 const ELITE_TEAMS = [
     "galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor",
     "real madrid", "barcelona", "atletico madrid", "sevilla",
@@ -194,7 +194,7 @@ function startRound(roomCode) {
         }
         
     } else {
-        // --- YENİ ZORLUK FİLTRELİ NORMAL OYUN MODU ---
+        // --- 4 AŞAMALI ZORLUK FİLTRELİ NORMAL OYUN MODU ---
         let attempts = 0;
         let validTeamFound = false;
 
@@ -217,7 +217,15 @@ function startRound(roomCode) {
                     room.currentTeamB = shuffledTeams[1];
                     validTeamFound = true;
                 }
-            } else { // Hard mode (Varsayılan Rastgele)
+            } else if (room.difficulty === 'very_hard') {
+                // YENİ: ÇOK ZOR MOD (İki takım da Elit listede OLMAYACAK)
+                if (!ELITE_TEAMS.includes(team1) && !ELITE_TEAMS.includes(team2)) {
+                    room.currentTeamA = shuffledTeams[0]; 
+                    room.currentTeamB = shuffledTeams[1];
+                    validTeamFound = true;
+                }
+            } else { 
+                // Hard mode (Varsayılan Rastgele - Eski Sistem)
                 room.currentTeamA = shuffledTeams[0]; 
                 room.currentTeamB = shuffledTeams[1];
                 validTeamFound = true;
@@ -225,7 +233,6 @@ function startRound(roomCode) {
             attempts++;
         }
 
-        // Eğer elit takımlı birleşimi 300 denemede bulamazsa sistemi kitlememek için rastgele verir (Güvenlik Önlemi)
         if (!validTeamFound) {
             randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
             const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
@@ -256,7 +263,6 @@ io.on('connection', (socket) => {
         if (rooms[roomCode]) socket.join(roomCode);
     });
 
-    // YENİ: Zorluk derecesi sunucuya difficulty değişkeni ile aktarılıyor
     socket.on('createSinglePlayer', ({ playerName, gameMode, playStyle, difficulty }) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = { isSinglePlayer: true, playStyle, gameMode, difficulty: difficulty || 'hard', players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, isGameOver: false };
@@ -264,7 +270,6 @@ io.on('connection', (socket) => {
         nextTurn(roomCode);
     });
 
-    // YENİ: Aynı zorluk değişkeni çok oyunculu moda da aktarılıyor
     socket.on('createRoom', ({ playerName, gameMode, playStyle, difficulty }) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = { isSinglePlayer: false, playStyle, gameMode, difficulty: difficulty || 'hard', players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, roundTimer: null, isGameOver: false };
