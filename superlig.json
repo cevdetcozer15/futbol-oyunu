@@ -465,6 +465,20 @@
     { "name": "Tayyip Talha Sanuç", "country": "türkiye", "teams": ["beşiktaş","rizespor"] },
     { "name": "Noa Lang", "country": "hollanda", "teams": ["napoli", "galatasaray", "psv"] },
     { "name": "mata", "country": "ispanya", "teams": ["galatasaray", "chelsea", "manchester united", "valencia"] },
-    { "name": "Salih Özcan", "country": "türkiye", "teams": ["beşiktaş", "dortmund", "wolfsburg"] }
+    { "name": "Salih Özcan", "country": "türkiye", "teams": ["beşiktaş", "dortmund", "wolfsburg"] },
+    { "name": "Tetê", "country": "brezilya", "teams": ["shakhtar donetsk", "lyon", "leicester city", "galatasaray", "panathinaikos"] },
+    { "name": "Wilfried Zaha", "country": "fildişi sahili", "teams": ["crystal palace", "manchester united", "galatasaray", "lyon"] },
+    { "name": "Angeliño", "country": "ispanya", "teams": ["manchester city", "rb leipzig", "roma", "galatasaray"] },
+    { "name": "Diego Rossi", "country": "uruguay", "teams": ["lafc", "fenerbahçe"] },
+    { "name": "Mislav Oršić", "country": "hırvatistan", "teams": ["dinamo zagreb", "southampton", "trabzonspor"] },
+    { "name": "Fredrik Midtsjø", "country": "norveç", "teams": ["az alkmaar", "galatasaray", "pendikspor"] },
+    { "name": "Jesse Sekidika", "country": "nijerya", "teams": ["galatasaray", "konyaspor"] },
+    { "name": "Nazım Sangaré", "country": "türkiye", "teams": ["antalyaspor", "fenerbahçe"] },
+    { "name": "Tiago Çukur", "country": "türkiye", "teams": ["watford", "fenerbahçe"] },
+    { "name": "Amir Hadžiahmetović", "country": "bosna hersek", "teams": ["konyaspor", "beşiktaş", "rizespor", "hull city"] },
+    { "name": "Güven Yalçın", "country": "türkiye", "teams": ["bayer leverkusen", "beşiktaş", "genoa"] },
+    { "name": "Dame N'Doye", "country": "senegal", "teams": ["copenhagen", "lokomotiv moscow", "hull city", "trabzonspor"] },
+    { "name": "Fousseni Diabaté", "country": "mali", "teams": ["leicester city", "sivasspor", "trabzonspor"] },
+    { "name": "Dimitrios Kourbelis", "country": "yunanistan", "teams": ["panathinaikos", "trabzonspor"] }
 
 ]
