@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
+// YENİ KÜTÜPHANEMİZİ ÇAĞIRIYORUZ
+const stringSimilarity = require('string-similarity'); 
 
 const app = express();
 const server = http.createServer(app);
@@ -51,10 +53,30 @@ const teamCountries = {
     "bodo/glimt": "norveç", "rosenborg": "norveç", "molde": "norveç", "lyn": "norveç"
 };
 
-// ÇÖZÜM: Türkçe karakter sorununu aşmak için sözlüğü sunucu başlarken tamamen cleanText formatına çeviriyoruz.
 const cleanTeamCountries = {};
 for (const [key, value] of Object.entries(teamCountries)) {
     cleanTeamCountries[cleanText(key)] = cleanText(value);
+}
+
+// --- YENİ: FUZZY SEARCH (Benzerlik Kontrol Algoritması) ---
+function isNameFuzzyMatch(dbName, input) {
+    if (dbName.includes(input)) return true; // Oyuncunun adı içinde kelime direkt geçiyorsa (Eski çalışan sistem)
+
+    // Oyuncunun tam adıyla kullanıcının yazdığı arasındaki benzerliği ölç (Örn: "Wesley Sneijder" vs "Snayder")
+    const fullSimilarity = stringSimilarity.compareTwoStrings(dbName, input);
+    if (fullSimilarity >= 0.70) return true; // %70 benzerlik varsa kabul et
+
+    // İsimleri kelimelere ayırarak (isim - soyisim) daha isabetli analiz yap
+    // Örn: Oyuncu adı "Toni Kroos", yazılan isim "Kross" ise sadece Kroos kelimesi ile Kross kelimesini eşleştir.
+    const words = dbName.split(' ');
+    for (let word of words) {
+        // En az 4 harfli kelimeleri karşılaştır ki gereksiz 2 harfli isimlerle karışmasın
+        if (word.length >= 4 && stringSimilarity.compareTwoStrings(word, input) >= 0.70) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 // Hata toleranslı Veritabanı Okuyucu
@@ -160,11 +182,9 @@ function startRound(roomCode) {
             randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
             const randomTeam = randomPlayer.teams[Math.floor(Math.random() * randomPlayer.teams.length)];
             
-            // Temizlenmiş takım adını temizlenmiş sözlükte arıyoruz
             const teamCountry = cleanTeamCountries[cleanText(randomTeam)];
             const playerCountry = cleanText(randomPlayer.country);
 
-            // Eğer takım ülkesi sözlükte yoksa VEYA sözlükteki ülke, oyuncunun ülkesine EŞİT DEĞİLSE onay ver
             if (!teamCountry || teamCountry !== playerCountry) {
                 room.currentTeamA = randomTeam; 
                 room.currentTeamB = randomPlayer.country;
@@ -312,7 +332,11 @@ io.on('connection', (socket) => {
             const cleanPlayerName = cleanText(p.name);
             const isTeamAMatch = p.teams.some(t => cleanText(t).includes(cleanText(room.currentTeamA)));
             const isTeamBMatch = room.gameMode === 'country' ? cleanText(p.country).includes(cleanText(room.currentTeamB)) : p.teams.some(t => cleanText(t).includes(cleanText(room.currentTeamB)));
-            return cleanPlayerName.includes(cleanedAnswer) && isTeamAMatch && isTeamBMatch;
+            
+            // --- YENİ ALGORİTMAYI DEVREYE SOKTUK ---
+            const nameMatched = isNameFuzzyMatch(cleanPlayerName, cleanedAnswer);
+            
+            return nameMatched && isTeamAMatch && isTeamBMatch;
         });
 
         if (matchedPlayer && cleanedAnswer.length > 2) {
