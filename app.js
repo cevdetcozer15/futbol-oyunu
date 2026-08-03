@@ -84,18 +84,15 @@ function findClosestTeamKey(inputStr) {
     if (!inputStr) return "";
     let originalInput = inputStr.toLowerCase().trim();
     
-    // Kelime tamamen doğru yazıldıysa doğrudan döndür
     if (teamLogos[originalInput]) return originalInput; 
 
     let closestMatch = originalInput;
-    // Kelime uzunluğu 5 harften fazlaysa 3 harf hatasına, kısaysa 1 harf hatasına izin ver
     let minDistance = originalInput.length > 5 ? 3 : 2; 
 
     const keys = Object.keys(teamLogos);
     for (let k = 0; k < keys.length; k++) {
         let team = keys[k];
         
-        // Levenshtein Mesafesi (Harf hatası hesaplama algoritması)
         let a = originalInput, b = team;
         let matrix = [];
         for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
@@ -114,7 +111,6 @@ function findClosestTeamKey(inputStr) {
         }
         let distance = matrix[b.length][a.length];
 
-        // Bulunan hata payı izin verilen sınırın altındaysa ve şu ana kadarki en iyi eşleşmeyse kaydet
         if (distance < minDistance) {
             minDistance = distance;
             closestMatch = team;
@@ -140,12 +136,14 @@ const matchTeamsContainer = document.getElementById('match-teams-container');
 const customTeamError = document.getElementById('custom-team-error');
 const playStyleSelection = document.getElementById('play-style-selection');
 const modeSelection = document.getElementById('mode-selection');
+const difficultySelection = document.getElementById('difficulty-selection'); // YENİ EKLENDİ
 
 // --- OYUN DURUM DEĞİŞKENLERİ ---
 let myRoomCode = ""; let isRoundActive = false; let countdownInterval;
 let isSinglePlayerMode = false; let isFirstRoundSP = true; let spTimerLeft = 120; let spGlobalInterval;
 let pendingTarget = ""; let myPlayerIndex = 0; 
 let selectedPlayStyle = ""; 
+let selectedDifficulty = 'hard'; // YENİ EKLENDİ (Varsayılan zorluk)
 let roundStartInterval; 
 
 // --- MOBİL ARKA PLAN / UYKU MODU ÇÖZÜMÜ ---
@@ -165,20 +163,26 @@ function showPlayStyleSelection(target) {
     pendingTarget = target; 
     document.querySelector('.lobby-actions').style.display = 'none'; 
     modeSelection.style.display = 'none'; 
+    difficultySelection.style.display = 'none';
     playStyleSelection.style.display = 'flex'; 
 }
+
 function hidePlayStyleSelection() { 
     pendingTarget = ""; 
     playStyleSelection.style.display = 'none'; 
     modeSelection.style.display = 'none'; 
+    difficultySelection.style.display = 'none'; // YENİ EKLENDİ
     document.querySelector('.lobby-actions').style.display = 'flex'; 
 }
+
 function showModeSelection() { 
     playStyleSelection.style.display = 'none'; 
     modeSelection.style.display = 'flex'; 
 }
+
 function goBackToPlayStyleSelection() { 
     modeSelection.style.display = 'none'; 
+    difficultySelection.style.display = 'none'; // YENİ EKLENDİ
     playStyleSelection.style.display = 'flex'; 
 }
 
@@ -190,15 +194,37 @@ document.getElementById('backModeBtn').addEventListener('click', goBackToPlaySty
 document.getElementById('styleRandomBtn').addEventListener('click', () => { selectedPlayStyle = 'random'; showModeSelection(); });
 document.getElementById('styleCustomBtn').addEventListener('click', () => { selectedPlayStyle = 'custom'; showModeSelection(); });
 
-document.getElementById('modeTeamsBtn').addEventListener('click', () => startWithMode('teams'));
+// --- YENİ EKLENEN ZORLUK YÖNLENDİRME MANTIĞI ---
+document.getElementById('modeTeamsBtn').addEventListener('click', () => {
+    if (selectedPlayStyle === 'random') {
+        modeSelection.style.display = 'none';
+        difficultySelection.style.display = 'flex';
+    } else {
+        selectedDifficulty = 'hard';
+        startWithMode('teams');
+    }
+});
 document.getElementById('modeSuperLigBtn').addEventListener('click', () => startWithMode('superlig'));
 document.getElementById('modeCountryBtn').addEventListener('click', () => startWithMode('country'));
 
+document.getElementById('diffEasyBtn').addEventListener('click', () => { selectedDifficulty = 'easy'; startWithMode('teams'); });
+document.getElementById('diffMediumBtn').addEventListener('click', () => { selectedDifficulty = 'medium'; startWithMode('teams'); });
+document.getElementById('diffHardBtn').addEventListener('click', () => { selectedDifficulty = 'hard'; startWithMode('teams'); });
+document.getElementById('diffVeryHardBtn').addEventListener('click', () => { selectedDifficulty = 'very_hard'; startWithMode('teams'); });
+
+document.getElementById('backDiffBtn').addEventListener('click', () => {
+    difficultySelection.style.display = 'none';
+    modeSelection.style.display = 'flex';
+});
+// ----------------------------------------------
+
 function startWithMode(selectedMode) {
     const nameInput = document.getElementById('playerName').value || (pendingTarget === "single" ? "Oyuncu" : "Oyuncu 1");
-    if (pendingTarget === "single") socket.emit('createSinglePlayer', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle });
-    else socket.emit('createRoom', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle });
+    // socket objesinin içerisine zorluk seviyesini (difficulty) dahil ediyoruz
+    if (pendingTarget === "single") socket.emit('createSinglePlayer', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle, difficulty: selectedDifficulty });
+    else socket.emit('createRoom', { playerName: nameInput, gameMode: selectedMode, playStyle: selectedPlayStyle, difficulty: selectedDifficulty });
     hidePlayStyleSelection();
+    difficultySelection.style.display = 'none'; // Güvenlik amaçlı tekrar gizleme
 }
 
 document.getElementById('joinRoomBtn').addEventListener('click', () => {
