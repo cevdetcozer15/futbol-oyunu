@@ -389,7 +389,7 @@
     { "name": "Vedat Muriqi", "country": "kosova", "teams": ["fenerbahçe", "mallorca", "rize"] },
     { "name": "Mason Greenwood", "country": "ingiltere", "teams": ["fenerbahçe", "marsilla", "manchester united"] },
     { "name": "Matteo Guendouzi", "country": "fransa", "teams": ["fenerbahçe", "arsenal", "lazio"] },
-    { "name": "Orkun Kökçü", "country": "türkiye", "teams": ["beşiktaş", "feyenord", "benfica"] },
+    { "name": "Orkun Kökçü", "country": "türkiye", "teams": ["beşiktaş", "feyenoord", "benfica"] },
     { "name": "emmanuel agbadou", "country": "fildişi sahili", "teams": ["beşiktaş", "wolves"] },
     { "name": "alexander nübel", "country": "almanya", "teams": ["beşiktaş", "bayen münih", "schealke"] },
     { "name": "Emmanuel Adebayor", "country": "togo", "teams": ["real madrid", "metz", "monaco", "arsenal", "manchester city", "başakşehir","Tottenham","Crystal Palace","kayserispor"] },
