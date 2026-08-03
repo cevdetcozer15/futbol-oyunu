@@ -291,7 +291,11 @@ io.on('connection', (socket) => {
                 cleanB = otherTeams[Math.floor(Math.random() * otherTeams.length)];
             }
             
-            room.currentTeamA = room.customTeamA; room.currentTeamB = cleanB; room.correctAnswer = randomPlayer.name.toUpperCase();
+            const actualTeamA = randomPlayer.teams.find(t => cleanText(t).includes(cleanA));
+            
+            room.currentTeamA = actualTeamA; 
+            room.currentTeamB = cleanB; 
+            room.correctAnswer = randomPlayer.name.toUpperCase();
             startValidatedRound(roomCode); return;
         }
 
@@ -302,7 +306,15 @@ io.on('connection', (socket) => {
 
         if (matchedPlayers.length > 0) {
             const randomPlayer = matchedPlayers[Math.floor(Math.random() * matchedPlayers.length)];
-            room.currentTeamA = room.customTeamA; room.currentTeamB = room.customTeamB; room.correctAnswer = randomPlayer.name.toUpperCase();
+            
+            const actualTeamA = randomPlayer.teams.find(t => cleanText(t).includes(cleanA));
+            const actualTeamB = room.gameMode === 'country' 
+                ? randomPlayer.country 
+                : randomPlayer.teams.find(t => cleanText(t).includes(cleanB));
+
+            room.currentTeamA = actualTeamA; 
+            room.currentTeamB = actualTeamB; 
+            room.correctAnswer = randomPlayer.name.toUpperCase();
             startValidatedRound(roomCode);
         } else {
             room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Bu iki takımda/ülkede oynamış ortak biri yok! Başka deneyin.");
