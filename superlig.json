@@ -456,5 +456,14 @@
     { "name": "Sezer Öztürk", "country": "türkiye", "teams": ["bayer leverkusen", "manisaspor", "eskişehirspor", "fenerbahçe", "beşiktaş"] },
     { "name": "Soner Aydoğdu", "country": "türkiye", "teams": ["gençlerbirliği", "trabzonspor", "başakşehir", "göztepe", "antalyaspor", "samsunspor"] },
     { "name": "Kerim Frei", "country": "türkiye", "teams": ["fulham", "beşiktaş", "başakşehir", "fatih karagümrük"] },
-    { "name": "Ahmet Çalık", "country": "türkiye", "teams": ["gençlerbirliği", "galatasaray", "konyaspor"] }
+    { "name": "Ahmet Çalık", "country": "türkiye", "teams": ["gençlerbirliği", "galatasaray", "konyaspor"] },
+    { "name": "André Onana", "country": "kamerun", "teams": ["ajax", "inter", "manchester united", "trabzonspor"] },
+    { "name": "Murillo", "country": "panama", "teams": ["marseille", "beşiktaş"] },
+    { "name": "Semih Kılıçsoy", "country": "türkiye", "teams": ["beşiktaş", "Cagliari"] },
+    { "name": "Okay Yokuşlu", "country": "türkiye", "teams": ["trabzonspor", "celta vigo", "west brom", "getafe"] },
+    { "name": "Ersin Destanoğlu", "country": "türkiye", "teams": ["beşiktaş","el cezire"] },
+    { "name": "Tayyip Talha Sanuç", "country": "türkiye", "teams": ["beşiktaş","rizespor"] },
+    { "name": "Noa Lang", "country": "hollanda", "teams": ["napoli", "galatasaray", "psv"] },
+    { "name": "mata", "country": "ispanya", "teams": ["galatasaray", "chelsea", "manchester united", "valencia"] }
+
 ]
