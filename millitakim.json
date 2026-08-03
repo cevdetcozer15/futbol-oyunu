@@ -763,6 +763,6 @@
     { "name": "Bryan Mbeumo", "country": "kamerun", "teams": ["manchester united", "brentford"] },
     { "name": "Milinković-Savić", "country": "sırbistan", "teams": ["lazio"] },
     { "name": "hiroki ito", "country": "japonya", "teams": ["bayern münih"] },
-    { "name": "mata", "country": "ispanya", "teams": "galatasaray", "chelsea","manchester united", "valencia"] }
+    { "name": "mata", "country": "ispanya", "teams": ["galatasaray", "chelsea","manchester united", "valencia"] }
     
 ]
