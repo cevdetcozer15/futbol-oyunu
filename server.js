@@ -12,6 +12,17 @@ app.use(express.static(__dirname));
 
 const BIG_FOUR = ["galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor"];
 
+// YENİ: ZORLUK FİLTRESİ İÇİN ELİT TAKIMLAR LİSTESİ
+const ELITE_TEAMS = [
+    "galatasaray", "fenerbahçe", "beşiktaş", "trabzonspor",
+    "real madrid", "barcelona", "atletico madrid", "sevilla",
+    "arsenal", "manchester city", "manchester united", "chelsea", "liverpool", "tottenham",
+    "juventus", "ac milan", "inter", "roma", "napoli",
+    "bayern münih", "dortmund", "bayer leverkusen", "rb leipzig",
+    "psg", "lyon", "marseille", "monaco",
+    "ajax", "psv", "porto", "benfica", "sporting"
+];
+
 function cleanText(text) {
     if(!text) return "";
     return text.toLowerCase().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -19,23 +30,14 @@ function cleanText(text) {
 
 // --- ÜLKE/TAKIM SÖZLÜĞÜ ---
 const teamCountries = {
-    // TÜRKİYE
     "galatasaray": "türkiye", "fenerbahçe": "türkiye", "beşiktaş": "türkiye", "trabzonspor": "türkiye", "başakşehir": "türkiye", "kasımpaşa": "türkiye", "konyaspor": "türkiye", "antalyaspor": "türkiye", "göztepe": "türkiye", "rizespor": "türkiye", "kayserispor": "türkiye", "sivasspor": "türkiye", "adana demirspor": "türkiye", "karagümrük": "türkiye", "ankaragücü": "türkiye", "samsunspor": "türkiye", "alanyaspor": "türkiye", "bursaspor": "türkiye", "gençlerbirliği": "türkiye", "eskişehirspor": "türkiye", "gaziantepspor": "türkiye", "gaziantep fk": "türkiye", "eyüpspor": "türkiye", "akhisarspor": "türkiye", "denizlispor": "türkiye", "manisaspor": "türkiye", "kocaelispor": "türkiye", "istanbulspor": "türkiye", "pendikspor": "türkiye", "bodrum fk": "türkiye", "çaykur rizespor": "türkiye", "rize": "türkiye",
-    // İNGİLTERE
     "arsenal": "ingiltere", "manchester city": "ingiltere", "manchester united": "ingiltere", "chelsea": "ingiltere", "liverpool": "ingiltere", "aston villa": "ingiltere", "tottenham": "ingiltere", "newcastle united": "ingiltere", "west ham": "ingiltere", "everton": "ingiltere", "brighton": "ingiltere", "crystal palace": "ingiltere", "fulham": "ingiltere", "leicester city": "ingiltere", "nottingham forest": "ingiltere", "wolves": "ingiltere", "leeds united": "ingiltere", "bournemouth": "ingiltere", "brentford": "ingiltere", "southampton": "ingiltere", "sheffield united": "ingiltere", "hull city": "ingiltere", "sunderland": "ingiltere", "blackburn": "ingiltere", "reading": "ingiltere", "derby": "ingiltere", "preston": "ingiltere", "middlesbrough": "ingiltere",
-    // İSPANYA
     "real madrid": "ispanya", "barcelona": "ispanya", "atletico madrid": "ispanya", "sevilla": "ispanya", "villarreal": "ispanya", "valencia": "ispanya", "real betis": "ispanya", "athletic bilbao": "ispanya", "celta vigo": "ispanya", "getafe": "ispanya", "girona": "ispanya", "osasuna": "ispanya", "mallorca": "ispanya", "real sociedad": "ispanya", "malaga": "ispanya", "espanyol": "ispanya", "alaves": "ispanya", "deportivo la coruna": "ispanya", "granada": "ispanya", "levante": "ispanya", "cadiz": "ispanya",
-    // İTALYA
     "inter": "italya", "ac milan": "italya", "juventus": "italya", "roma": "italya", "napoli": "italya", "lazio": "italya", "atalanta": "italya", "fiorentina": "italya", "torino": "italya", "bologna": "italya", "genoa": "italya", "parma": "italya", "sampdoria": "italya", "cagliari": "italya", "empoli": "italya", "udinese": "italya", "sassuolo": "italya", "venezia": "italya", "como": "italya", "hellas verona": "italya", "reggina": "italya",
-    // ALMANYA
     "bayern münih": "almanya", "dortmund": "almanya", "bayer leverkusen": "almanya", "rb leipzig": "almanya", "stuttgart": "almanya", "eintracht frankfurt": "almanya", "wolfsburg": "almanya", "schalke": "almanya", "werder bremen": "almanya", "freiburg": "almanya", "union berlin": "almanya", "köln": "almanya", "hoffenheim": "almanya", "hamburg": "almanya", "mainz": "almanya", "hannover": "almanya", "augsburg": "almanya", "1860 munich": "almanya", "bochum": "almanya", "hertha berlin": "almanya", "st. pauli": "almanya",
-    // FRANSA
     "psg": "fransa", "marseille": "fransa", "lyon": "fransa", "monaco": "fransa", "lille": "fransa", "rennes": "fransa", "nice": "fransa", "lens": "fransa", "bordeaux": "fransa", "toulouse": "fransa", "strasbourg": "fransa", "nantes": "fransa", "angers": "fransa", "clermont": "fransa", "metz": "fransa", "saint-etienne": "fransa", "amiens": "fransa", "bastia": "fransa", "le havre": "fransa", "troyes": "fransa", "guingamp": "fransa",
-    // HOLLANDA
     "ajax": "hollanda", "psv": "hollanda", "feyenoord": "hollanda", "az alkmaar": "hollanda", "twente": "hollanda", "heerenveen": "hollanda", "nec nijmegen": "hollanda", "sparta rotterdam": "hollanda", "vitesse": "hollanda", "groningen": "hollanda",
-    // PORTEKİZ
     "porto": "portekiz", "benfica": "portekiz", "sporting": "portekiz", "braga": "portekiz", "vitoria guimaraes": "portekiz", "gil vicente": "portekiz", "famalicao": "portekiz", "rio ave": "portekiz", "boavista": "portekiz",
-    // DİĞER COĞRAFYALAR
     "club brugge": "belçika", "anderlecht": "belçika", "genk": "belçika", "standard liege": "belçika", "union sg": "belçika", "antwerp": "belçika", "charleroi": "belçika",
     "celtic": "iskoçya", "rangers": "iskoçya", "dundee united": "iskoçya",
     "boca juniors": "arjantin", "river plate": "arjantin", "tigre": "arjantin", "belgrano": "arjantin", "san lorenzo": "arjantin",
@@ -192,10 +194,44 @@ function startRound(roomCode) {
         }
         
     } else {
-        randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
-        const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
-        room.currentTeamA = shuffledTeams[0]; 
-        room.currentTeamB = shuffledTeams[1];
+        // --- YENİ ZORLUK FİLTRELİ NORMAL OYUN MODU ---
+        let attempts = 0;
+        let validTeamFound = false;
+
+        while (!validTeamFound && attempts < 300) {
+            randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
+            const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
+            
+            const team1 = cleanText(shuffledTeams[0]);
+            const team2 = cleanText(shuffledTeams[1]);
+            
+            if (room.difficulty === 'easy') {
+                if (ELITE_TEAMS.includes(team1) && ELITE_TEAMS.includes(team2)) {
+                    room.currentTeamA = shuffledTeams[0]; 
+                    room.currentTeamB = shuffledTeams[1];
+                    validTeamFound = true;
+                }
+            } else if (room.difficulty === 'medium') {
+                if (ELITE_TEAMS.includes(team1) || ELITE_TEAMS.includes(team2)) {
+                    room.currentTeamA = shuffledTeams[0]; 
+                    room.currentTeamB = shuffledTeams[1];
+                    validTeamFound = true;
+                }
+            } else { // Hard mode (Varsayılan Rastgele)
+                room.currentTeamA = shuffledTeams[0]; 
+                room.currentTeamB = shuffledTeams[1];
+                validTeamFound = true;
+            }
+            attempts++;
+        }
+
+        // Eğer elit takımlı birleşimi 300 denemede bulamazsa sistemi kitlememek için rastgele verir (Güvenlik Önlemi)
+        if (!validTeamFound) {
+            randomPlayer = activeDB[Math.floor(Math.random() * activeDB.length)];
+            const shuffledTeams = [...randomPlayer.teams].sort(() => 0.5 - Math.random());
+            room.currentTeamA = shuffledTeams[0]; 
+            room.currentTeamB = shuffledTeams[1];
+        }
     }
 
     room.correctAnswer = randomPlayer.name.toUpperCase();
@@ -220,16 +256,18 @@ io.on('connection', (socket) => {
         if (rooms[roomCode]) socket.join(roomCode);
     });
 
-    socket.on('createSinglePlayer', ({ playerName, gameMode, playStyle }) => {
+    // YENİ: Zorluk derecesi sunucuya difficulty değişkeni ile aktarılıyor
+    socket.on('createSinglePlayer', ({ playerName, gameMode, playStyle, difficulty }) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = { isSinglePlayer: true, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, isGameOver: false };
+        rooms[roomCode] = { isSinglePlayer: true, playStyle, gameMode, difficulty: difficulty || 'hard', players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, isGameOver: false };
         socket.join(roomCode); socket.emit('gameReadySP', { p1: playerName, roomCode });
         nextTurn(roomCode);
     });
 
-    socket.on('createRoom', ({ playerName, gameMode, playStyle }) => {
+    // YENİ: Aynı zorluk değişkeni çok oyunculu moda da aktarılıyor
+    socket.on('createRoom', ({ playerName, gameMode, playStyle, difficulty }) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = { isSinglePlayer: false, playStyle: playStyle, gameMode: gameMode, players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, roundTimer: null, isGameOver: false };
+        rooms[roomCode] = { isSinglePlayer: false, playStyle, gameMode, difficulty: difficulty || 'hard', players: [{ id: socket.id, name: playerName, score: 0 }], roundActive: false, currentTeamA: "", currentTeamB: "", correctAnswer: "", passVotes: 0, roundTimer: null, isGameOver: false };
         socket.join(roomCode); socket.emit('roomCreated', roomCode); 
     });
 
