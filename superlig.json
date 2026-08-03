@@ -51,7 +51,7 @@
     { "name": "Diego Lugano", "country": "uruguay", "teams": ["fenerbahçe", "psg", "malaga", "west brom"] },
     { "name": "Guti", "country": "ispanya", "teams": ["real madrid", "beşiktaş"] },
     { "name": "Johan Elmander", "country": "isveç", "teams": ["feyenoord","galatasaray", "norwich"] },
-    { "name": "Gabrial Sara", "country": "brezilya", "teams": ["norwich", "galatasaray"] },
+    { "name": "Gabriel Sara", "country": "brezilya", "teams": ["norwich", "galatasaray"] },
     { "name": "Victor Osimhen", "country": "nijerya", "teams": ["wolfsburg", "lille", "napoli", "galatasaray"] },
     { "name": "Leroy Sane", "country": "almanya", "teams": ["manchester city", "bayern münih", "Galatasaray", "schalke"] },
     { "name": "Lucas Torreira", "country": "uruguay", "teams": ["arsenal", "Galatasaray"] },
