@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
-// YENİ KÜTÜPHANEMİZİ ÇAĞIRIYORUZ
 const stringSimilarity = require('string-similarity'); 
 
 const app = express();
@@ -58,19 +57,14 @@ for (const [key, value] of Object.entries(teamCountries)) {
     cleanTeamCountries[cleanText(key)] = cleanText(value);
 }
 
-// --- YENİ: FUZZY SEARCH (Benzerlik Kontrol Algoritması) ---
 function isNameFuzzyMatch(dbName, input) {
-    if (dbName.includes(input)) return true; // Oyuncunun adı içinde kelime direkt geçiyorsa (Eski çalışan sistem)
+    if (dbName.includes(input)) return true; 
 
-    // Oyuncunun tam adıyla kullanıcının yazdığı arasındaki benzerliği ölç (Örn: "Wesley Sneijder" vs "Snayder")
     const fullSimilarity = stringSimilarity.compareTwoStrings(dbName, input);
-    if (fullSimilarity >= 0.70) return true; // %70 benzerlik varsa kabul et
+    if (fullSimilarity >= 0.70) return true; 
 
-    // İsimleri kelimelere ayırarak (isim - soyisim) daha isabetli analiz yap
-    // Örn: Oyuncu adı "Toni Kroos", yazılan isim "Kross" ise sadece Kroos kelimesi ile Kross kelimesini eşleştir.
     const words = dbName.split(' ');
     for (let word of words) {
-        // En az 4 harfli kelimeleri karşılaştır ki gereksiz 2 harfli isimlerle karışmasın
         if (word.length >= 4 && stringSimilarity.compareTwoStrings(word, input) >= 0.70) {
             return true;
         }
@@ -79,7 +73,6 @@ function isNameFuzzyMatch(dbName, input) {
     return false;
 }
 
-// Hata toleranslı Veritabanı Okuyucu
 function getDB(mode) {
     let classic = [], superlig = [], milli = [];
     
@@ -281,17 +274,29 @@ io.on('connection', (socket) => {
         if (cleanB === "" && room.isSinglePlayer) {
             const possiblePlayers = activeDB.filter(p => p.teams && p.teams.some(t => cleanText(t).includes(cleanA)));
             if (possiblePlayers.length === 0) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Veritabanında bu takımda oynamış kimse yok!"); return; }
-            const randomPlayer = possiblePlayers[Math.floor(Math.random() * possiblePlayers.length)];
             
+            let randomPlayer;
+            let actualTeamA;
+
             if (room.gameMode === 'country') {
+                const validPlayers = possiblePlayers.filter(p => {
+                    const matchedTeam = p.teams.find(t => cleanText(t).includes(cleanA));
+                    const teamCountry = cleanTeamCountries[cleanText(matchedTeam)];
+                    const playerCountry = cleanText(p.country);
+                    return !teamCountry || teamCountry !== playerCountry;
+                });
+                
+                const pool = validPlayers.length > 0 ? validPlayers : possiblePlayers;
+                randomPlayer = pool[Math.floor(Math.random() * pool.length)];
                 cleanB = randomPlayer.country;
+                actualTeamA = randomPlayer.teams.find(t => cleanText(t).includes(cleanA));
             } else {
+                randomPlayer = possiblePlayers[Math.floor(Math.random() * possiblePlayers.length)];
                 const otherTeams = randomPlayer.teams.filter(t => !cleanText(t).includes(cleanA));
                 if (otherTeams.length === 0) { room.teamAReady = false; room.teamBReady = false; io.to(roomCode).emit('invalidCustomTeams', "Bu adamın başka takımı yok!"); return; }
                 cleanB = otherTeams[Math.floor(Math.random() * otherTeams.length)];
+                actualTeamA = randomPlayer.teams.find(t => cleanText(t).includes(cleanA));
             }
-            
-            const actualTeamA = randomPlayer.teams.find(t => cleanText(t).includes(cleanA));
             
             room.currentTeamA = actualTeamA; 
             room.currentTeamB = cleanB; 
@@ -345,7 +350,6 @@ io.on('connection', (socket) => {
             const isTeamAMatch = p.teams.some(t => cleanText(t).includes(cleanText(room.currentTeamA)));
             const isTeamBMatch = room.gameMode === 'country' ? cleanText(p.country).includes(cleanText(room.currentTeamB)) : p.teams.some(t => cleanText(t).includes(cleanText(room.currentTeamB)));
             
-            // --- YENİ ALGORİTMAYI DEVREYE SOKTUK ---
             const nameMatched = isNameFuzzyMatch(cleanPlayerName, cleanedAnswer);
             
             return nameMatched && isTeamAMatch && isTeamBMatch;
