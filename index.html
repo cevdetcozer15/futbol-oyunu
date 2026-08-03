@@ -46,6 +46,16 @@
             <button id="backModeBtn" class="cancel-btn" style="margin-top: 10px;">⬅️ Geri</button>
         </div>
 
+        <!-- YENİ: ZORLUK SEÇİM EKRANI -->
+        <div id="difficulty-selection" style="display: none;" class="mode-container">
+            <h3>Zorluk Seviyesi (Klasik Mod)</h3>
+            <button id="diffEasyBtn" class="mode-btn" style="background-color: #2ecc71;">🟢 Kolay (Sadece Büyük Takımlar)</button>
+            <button id="diffMediumBtn" class="mode-btn" style="background-color: #f1c40f; color: black;">🟡 Orta (En Az 1 Büyük Takım)</button>
+            <button id="diffHardBtn" class="mode-btn" style="background-color: #e67e22;">🟠 Zor (Tamamen Rastgele)</button>
+            <button id="diffVeryHardBtn" class="mode-btn" style="background-color: #e74c3c;">🔴 Çok Zor (Büyük Takım Yok)</button>
+            <button id="backDiffBtn" class="cancel-btn" style="margin-top: 10px;">⬅️ Geri</button>
+        </div>
+
         <div id="lobby-message"></div>
     </div>
 
@@ -111,6 +121,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js?v=19"></script>
+    <script src="app.js?v=20"></script>
 </body>
 </html>
