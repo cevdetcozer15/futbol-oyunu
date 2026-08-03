@@ -762,6 +762,7 @@
     { "name": "Lee Kang-in", "country": "güney kore", "teams": ["psg"] },
     { "name": "Bryan Mbeumo", "country": "kamerun", "teams": ["manchester united", "brentford"] },
     { "name": "Milinković-Savić", "country": "sırbistan", "teams": "lazio"] },
-    { "name": "hiroki ito", "country": "japonya", "teams": "bayern münih"] }
+    { "name": "hiroki ito", "country": "japonya", "teams": "bayern münih"] },
+    { "name": "mata", "country": "ispanya", "teams": "galatasaray", "chealsea","manchester united", "valencia"] }
     
 ]
