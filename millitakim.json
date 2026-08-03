@@ -405,7 +405,7 @@
     { "name": "Gökhan Gönül", "country": "türkiye", "teams": ["rizespor", "beşiktaş", "fenerbahçe"] },
     { "name": "Emre Belözoğlu", "country": "türkiye", "teams": ["galatasaray", "inter", "newcastle united", "atletico madrid", "başakşehir", "fenerbahçe"] },
     { "name": "Ryan Donk", "country": "surinam", "teams": ["az alkmaar", "club brugge", "real betis", "kasımpaşa", "galatasaray"] },
-    { "name": "Garry Rodrigues", "country": "yeşil burun adaları", "teams": ["paok", "al ittihad", "ankaragücü", "fenerbahçe", "galatasaray"] },
+    { "name": "Garry Rodrigues", "country": "yeşil burun adaları", "teams": ["fenerbahçe", "galatasaray"] },
     { "name": "Henry Onyekuru", "country": "nijerya", "teams": ["everton", "anderlecht", "monaco", "olympiacos", "adana demirspor", "galatasaray"] },
     { "name": "Aurélien Chedjou", "country": "kamerun", "teams": ["bursaspor", "başakşehir", "galatasaray"] },
     { "name": "Semih Kaya", "country": "türkiye", "teams": ["galatasaray"] },
