@@ -464,6 +464,7 @@
     { "name": "Ersin Destanoğlu", "country": "türkiye", "teams": ["beşiktaş","el cezire"] },
     { "name": "Tayyip Talha Sanuç", "country": "türkiye", "teams": ["beşiktaş","rizespor"] },
     { "name": "Noa Lang", "country": "hollanda", "teams": ["napoli", "galatasaray", "psv"] },
-    { "name": "mata", "country": "ispanya", "teams": ["galatasaray", "chelsea", "manchester united", "valencia"] }
+    { "name": "mata", "country": "ispanya", "teams": ["galatasaray", "chelsea", "manchester united", "valencia"] },
+    { "name": "Salih Özcan", "country": "türkiye", "teams": ["beşiktaş", "dortmund", "wolfsburg"] }
 
 ]
