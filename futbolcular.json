@@ -567,7 +567,6 @@
     { "name": "Lucio", "country": "brezilya", "teams": ["bayer leverkusen", "bayern münih", "inter", "juventus"] },
     { "name": "Hernan Crespo", "country": "arjantin", "teams": ["inter", "chelsea", "ac milan"] },
     { "name": "Gabriel Batistuta", "country": "arjantin", "teams": ["roma", "inter"] },
-    [
     { "name": "Trent Alexander-Arnold", "country": "ingiltere", "teams": ["liverpool", "real madrid"] },
     { "name": "Marcus Rashford", "country": "ingiltere", "teams": ["manchester united", "barcelona"] },
     { "name": "Alejandro Garnacho", "country": "arjantin", "teams": ["manchester united", "chelsea"] },
@@ -669,6 +668,11 @@
     { "name": "Kovacić", "country": "hırvatistan", "teams": ["inter", "real madrid", "chelsea", "manchester city"] },
     { "name": "Benjamin Pavard", "country": "fransa", "teams": ["bayern münih", "inter"] },
     { "name": "Bryan Mbeumo", "country": "kamerun", "teams": ["manchester united", "brentford"] },
-    { "name": "mata", "country": "ispanya", "teams": ["galatasaray", "chelsea", "manchester united", "valencia"] }
+    { "name": "mata", "country": "ispanya", "teams": ["galatasaray", "chelsea", "manchester united", "valencia"] },
+    { "name": "Mazraoui", "country": "fas", "teams": ["ajax", "bayern münih", "manchester united"] },
+    { "name": "Tomori", "country": "ingiltere", "teams": ["chelsea", "newcastle united", "ac milan"] },
+    { "name": "Trippier", "country": "ingiltere", "teams": ["manchester city", "tottenham", "atletico madrid", "newcastle united"] },
+    { "name": "Son", "country": "güney kore", "teams": ["bayer leverkusen", "tottenham"] }
+]
 ]
 ]
